@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Sign Language Interpreter </title>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+</head>
+<body style="font-family: Arial, sans-serif; text-align: center; background-color: #f0f2f5;">
+
+  <h1>Sign Language Interpreter</h1>
+  
+  <div style="position: relative; display: inline-block;">
+    <video id="input_video" style="display:none"></video>
+    <canvas id="output_canvas" width="640" height="480" style="border: 5px solid #333; border-radius: 10px;"></canvas>
+  </div>
+
+  <div id="status" style="font-size: 18px; color: #555; margin-top: 10px;">Initializing System...</div>
+  <div id="result" style="font-size: 32px; font-weight: bold; color: #007bff; margin-top: 15px;">WAITING FOR INPUT</div>
+
+  <script>
+    const videoElement = document.getElementById('input_video');
+    const canvasElement = document.getElementById('output_canvas');
+    const canvasCtx = canvasElement.getContext('2d');
+    const statusDiv = document.getElementById('status');
+    const resultDiv = document.getElementById('result');
+
+    // Setup MediaPipe Hands
+    const hands = new Hands({ 
+      locateFile: f => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${f}` 
+    });
+
+    hands.setOptions({ 
+      maxNumHands: 2, 
+      modelComplexity: 1,
+      minDetectionConfidence: 0.5, 
+      minTrackingConfidence: 0.5 
+    });
+
+    // This function runs every time MediaPipe detects a frame
+    hands.onResults(results => {
+      // 1. Draw the video frame to the canvas
+      canvasCtx.save();
+      canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+      canvasCtx.drawImage(results.image, 0, 0, canvasElement.width, canvasElement.height);
+
+      if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
+        statusDiv.textContent = "Hand Detected";
+        
+        for (const landmarks of results.multiHandLandmarks) {
+          // 2. Draw the skeleton connectors
+          drawConnectors(canvasCtx, landmarks, HAND_CONNECTIONS,
+            { color: '#00FF00', lineWidth: 3 });
+          
+          // 3. Draw the landmark points
+          drawLandmarks(canvasCtx, landmarks, 
+            { color: '#FF0000', lineWidth: 1 });
+
+          // TODO: Add your prediction logic here using your .h5/.json model
+          resultDiv.textContent = 'DETECTING GESTURE...';
+        }
+      } else {
+        statusDiv.textContent = "No hands in view";
+        resultDiv.textContent = "---";
+      }
+      canvasCtx.restore();
+    });
+
+    // Setup Camera
+    const camera = new Camera(videoElement, {
+      onFrame: async () => {
+        await hands.send({ image: videoElement });
+      },
+      width: 640,
+      height: 480
+    });
+
+    camera.start().then(() => {
+      statusDiv.textContent = "Camera Started - System Ready";
+    });
+
+  </script>
+</body>
+</html>
