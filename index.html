@@ -1,85 +1,1359 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Sign Language Interpreter </title>
+  <title>SignBridge — Sign Language Recognition</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
-</head>
-<body style="font-family: Arial, sans-serif; text-align: center; background-color: #f0f2f5;">
+  <style>
+    :root {
+      --bg: #0a0a0f;
+      --surface: #111118;
+      --surface2: #1a1a24;
+      --surface3: #22222f;
+      --border: #2a2a3a;
+      --accent: #7c6aff;
+      --accent2: #ff6a9d;
+      --green: #2dffb0;
+      --red: #ff4466;
+      --text: #e8e8f0;
+      --text2: #8888aa;
+      --text3: #4a4a66;
+      --mono: 'Space Mono', monospace;
+      --sans: 'DM Sans', sans-serif;
+    }
 
-  <h1>Sign Language Interpreter</h1>
-  
-  <div style="position: relative; display: inline-block;">
-    <video id="input_video" style="display:none"></video>
-    <canvas id="output_canvas" width="640" height="480" style="border: 5px solid #333; border-radius: 10px;"></canvas>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: var(--sans);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── Background grid ── */
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image:
+        linear-gradient(rgba(124,106,255,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(124,106,255,0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── Header ── */
+    header {
+      position: relative; z-index: 10;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 18px 32px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(10,10,15,0.8);
+      backdrop-filter: blur(20px);
+    }
+
+    .logo {
+      font-family: var(--mono);
+      font-size: 18px; font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+    .logo span { color: var(--accent); }
+
+    .header-badge {
+      font-family: var(--mono);
+      font-size: 11px;
+      padding: 4px 10px;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      color: var(--text2);
+    }
+
+    /* ── Tabs ── */
+    .tabs {
+      position: relative; z-index: 10;
+      display: flex; gap: 0;
+      padding: 0 32px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(10,10,15,0.6);
+    }
+
+    .tab-btn {
+      font-family: var(--sans);
+      font-size: 13px; font-weight: 500;
+      padding: 14px 22px;
+      background: none; border: none;
+      color: var(--text3);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: all 0.2s;
+      letter-spacing: 0.3px;
+    }
+    .tab-btn:hover { color: var(--text2); }
+    .tab-btn.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+
+    /* ── Main layout ── */
+    .main { position: relative; z-index: 5; }
+
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* ══════════════════════════════
+       DETECT TAB
+    ══════════════════════════════ */
+    .detect-layout {
+      display: grid;
+      grid-template-columns: 1fr 360px;
+      gap: 0;
+      min-height: calc(100vh - 120px);
+    }
+
+    /* Camera side */
+    .camera-section {
+      padding: 28px 24px 28px 32px;
+      display: flex; flex-direction: column; gap: 16px;
+    }
+
+    .camera-wrap {
+      position: relative;
+      border-radius: 16px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      background: #000;
+      aspect-ratio: 4/3;
+      max-width: 640px;
+    }
+
+    #output_canvas {
+      width: 100%; height: 100%;
+      display: block;
+      transform: rotateY(180deg);
+      -webkit-transform: rotateY(180deg);
+    }
+
+    .camera-overlay {
+      position: absolute; top: 12px; left: 12px;
+      display: flex; gap: 8px; align-items: center;
+    }
+
+    .rec-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--text3);
+      transition: background 0.2s;
+    }
+    .rec-dot.active { background: var(--red); animation: pulse 1s infinite; }
+
+    @keyframes pulse {
+      0%,100% { opacity: 1; } 50% { opacity: 0.3; }
+    }
+
+    .cam-label {
+      font-family: var(--mono);
+      font-size: 10px; color: var(--text2);
+      letter-spacing: 1px;
+    }
+
+    /* Progress bar */
+    .progress-track {
+      height: 3px;
+      background: var(--surface3);
+      border-radius: 2px;
+      overflow: hidden;
+      max-width: 640px;
+    }
+    .progress-fill {
+      height: 100%; width: 0%;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      transition: width 0.05s linear;
+      border-radius: 2px;
+    }
+
+    #status-text {
+      font-family: var(--mono);
+      font-size: 11px; color: var(--text2);
+      letter-spacing: 0.5px;
+    }
+
+    /* Right panel */
+    .right-panel {
+      border-left: 1px solid var(--border);
+      padding: 28px 24px;
+      display: flex; flex-direction: column; gap: 20px;
+    }
+
+    /* Result card */
+    .result-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px;
+      display: flex; flex-direction: column; gap: 8px;
+    }
+
+    .result-label {
+      font-family: var(--mono);
+      font-size: 10px; color: var(--text3);
+      letter-spacing: 1.5px; text-transform: uppercase;
+    }
+
+    #detected-word {
+      font-family: var(--mono);
+      font-size: 52px; font-weight: 700;
+      color: var(--text3);
+      letter-spacing: -2px;
+      line-height: 1;
+      transition: color 0.3s;
+      min-height: 56px;
+    }
+    #detected-word.has-result { color: var(--green); }
+    #detected-word.unknown { color: var(--red); }
+
+    #conf-text {
+      font-family: var(--mono);
+      font-size: 12px; color: var(--text3);
+    }
+
+    /* Word queue */
+    .queue-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+      flex: 1;
+      display: flex; flex-direction: column; gap: 12px;
+    }
+
+    .card-header {
+      display: flex; justify-content: space-between; align-items: center;
+    }
+
+    .card-title {
+      font-family: var(--mono);
+      font-size: 10px; color: var(--text3);
+      letter-spacing: 1.5px; text-transform: uppercase;
+    }
+
+    .btn-ghost {
+      font-family: var(--mono);
+      font-size: 10px;
+      padding: 5px 10px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: none;
+      color: var(--text2);
+      cursor: pointer;
+      transition: all 0.2s;
+      letter-spacing: 0.5px;
+    }
+    .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+
+    #word-queue {
+      display: flex; flex-wrap: wrap; gap: 8px;
+      min-height: 60px;
+    }
+
+    .word-chip {
+      font-family: var(--mono);
+      font-size: 12px;
+      padding: 6px 12px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      color: var(--text);
+      display: flex; align-items: center; gap: 6px;
+      animation: chipIn 0.2s ease;
+    }
+
+    @keyframes chipIn {
+      from { opacity: 0; transform: scale(0.8); }
+      to   { opacity: 1; transform: scale(1); }
+    }
+
+    .chip-del {
+      cursor: pointer; color: var(--text3);
+      font-size: 14px; line-height: 1;
+      transition: color 0.15s;
+    }
+    .chip-del:hover { color: var(--red); }
+
+    .queue-empty {
+      font-family: var(--mono);
+      font-size: 11px; color: var(--text3);
+      text-align: center; padding: 16px 0;
+    }
+
+    /* AI sentence */
+    .ai-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+      display: flex; flex-direction: column; gap: 12px;
+    }
+
+    .ai-header {
+      display: flex; justify-content: space-between; align-items: center;
+    }
+
+    .ai-badge {
+      font-family: var(--mono);
+      font-size: 9px;
+      padding: 3px 8px;
+      background: linear-gradient(135deg, rgba(124,106,255,0.2), rgba(255,106,157,0.2));
+      border: 1px solid rgba(124,106,255,0.3);
+      border-radius: 20px;
+      color: var(--accent);
+      letter-spacing: 1px;
+    }
+
+    .btn-primary {
+      font-family: var(--mono);
+      font-size: 11px;
+      padding: 8px 16px;
+      background: var(--accent);
+      border: none;
+      border-radius: 8px;
+      color: #fff;
+      cursor: pointer;
+      transition: all 0.2s;
+      letter-spacing: 0.5px;
+      width: 100%;
+    }
+    .btn-primary:hover { background: #9080ff; transform: translateY(-1px); }
+    .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+    #ai-output {
+      font-family: var(--sans);
+      font-size: 14px; line-height: 1.6;
+      color: var(--text);
+      min-height: 48px;
+      font-style: italic;
+    }
+
+    .ai-thinking {
+      display: flex; gap: 4px; align-items: center;
+      padding: 4px 0;
+    }
+    .ai-thinking span {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--accent);
+      animation: blink 1.2s infinite;
+    }
+    .ai-thinking span:nth-child(2) { animation-delay: 0.2s; }
+    .ai-thinking span:nth-child(3) { animation-delay: 0.4s; }
+
+    @keyframes blink {
+      0%,80%,100% { opacity: 0.2; transform: scale(0.8); }
+      40% { opacity: 1; transform: scale(1); }
+    }
+
+    /* ══════════════════════════════
+       RECORD TAB
+    ══════════════════════════════ */
+    .record-layout {
+      display: grid;
+      grid-template-columns: 1fr 380px;
+      gap: 0;
+      min-height: calc(100vh - 120px);
+    }
+
+    .record-camera {
+      padding: 28px 24px 28px 32px;
+      display: flex; flex-direction: column; gap: 16px;
+    }
+
+    .record-panel {
+      border-left: 1px solid var(--border);
+      padding: 28px 24px;
+      display: flex; flex-direction: column; gap: 20px;
+    }
+
+    .section-title {
+      font-family: var(--mono);
+      font-size: 11px; font-weight: 700;
+      color: var(--text2);
+      letter-spacing: 2px; text-transform: uppercase;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .input-row {
+      display: flex; gap: 10px;
+    }
+
+    .input-field {
+      flex: 1;
+      font-family: var(--mono);
+      font-size: 13px;
+      padding: 10px 14px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .input-field:focus { border-color: var(--accent); }
+    .input-field::placeholder { color: var(--text3); }
+
+    .record-status {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      display: flex; flex-direction: column; gap: 10px;
+    }
+
+    #record-label-display {
+      font-family: var(--mono);
+      font-size: 28px; font-weight: 700;
+      color: var(--text3);
+      letter-spacing: -1px;
+    }
+    #record-label-display.active { color: var(--accent2); }
+
+    #record-status-msg {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--text2);
+    }
+
+    #record-count-display {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--text3);
+    }
+
+    .recordings-list {
+      display: flex; flex-direction: column; gap: 6px;
+      max-height: 280px;
+      overflow-y: auto;
+    }
+
+    .recording-item {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 10px 14px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+    }
+
+    .recording-item-label {
+      font-family: var(--mono);
+      font-size: 12px; color: var(--text);
+    }
+
+    .recording-item-count {
+      font-family: var(--mono);
+      font-size: 10px; color: var(--text3);
+    }
+
+    .record-camera-wrap {
+      position: relative;
+      border-radius: 16px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      background: #000;
+      aspect-ratio: 4/3;
+      max-width: 640px;
+    }
+
+    #record_canvas {
+      width: 100%; height: 100%;
+      display: block;
+      transform: rotateY(180deg);
+      -webkit-transform: rotateY(180deg);
+    }
+
+    /* ══════════════════════════════
+       GESTURES TAB
+    ══════════════════════════════ */
+    .gestures-layout {
+      padding: 32px;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .gestures-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .gesture-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      display: flex; flex-direction: column; gap: 8px;
+      transition: border-color 0.2s, transform 0.2s;
+      position: relative;
+    }
+    .gesture-card:hover { border-color: var(--surface3); transform: translateY(-2px); }
+    .gesture-card.custom { border-color: rgba(255,106,157,0.3); }
+    .gesture-card.custom:hover { border-color: var(--accent2); }
+
+    .gesture-name {
+      font-family: var(--mono);
+      font-size: 18px; font-weight: 700;
+      color: var(--text);
+      text-transform: uppercase;
+    }
+
+    .gesture-meta {
+      font-family: var(--mono);
+      font-size: 10px; color: var(--text3);
+    }
+
+    .gesture-tag {
+      font-family: var(--mono);
+      font-size: 9px;
+      padding: 2px 7px;
+      border-radius: 10px;
+      width: fit-content;
+    }
+    .gesture-tag.builtin {
+      background: rgba(124,106,255,0.15);
+      color: var(--accent);
+      border: 1px solid rgba(124,106,255,0.2);
+    }
+    .gesture-tag.custom {
+      background: rgba(255,106,157,0.15);
+      color: var(--accent2);
+      border: 1px solid rgba(255,106,157,0.2);
+    }
+
+    .gesture-actions {
+      display: flex; gap: 6px; margin-top: 4px;
+    }
+
+    .btn-sm {
+      font-family: var(--mono);
+      font-size: 9px;
+      padding: 4px 9px;
+      border-radius: 5px;
+      border: 1px solid var(--border);
+      background: none;
+      color: var(--text2);
+      cursor: pointer;
+      transition: all 0.2s;
+      letter-spacing: 0.3px;
+    }
+    .btn-sm:hover { color: var(--accent); border-color: var(--accent); }
+    .btn-sm.danger:hover { color: var(--red); border-color: var(--red); }
+
+    .gestures-section-header {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--text3);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-top: 24px; margin-bottom: 8px;
+    }
+
+    .empty-state {
+      grid-column: 1/-1;
+      text-align: center;
+      padding: 40px;
+      color: var(--text3);
+      font-family: var(--mono);
+      font-size: 12px;
+    }
+
+    /* ── Scrollbar ── */
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    /* ── Toast ── */
+    #toast {
+      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(60px);
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 20px;
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--text);
+      z-index: 1000;
+      transition: transform 0.3s cubic-bezier(.34,1.56,.64,1);
+    }
+    #toast.show { transform: translateX(-50%) translateY(0); }
+
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Sign<span>Bridge</span></div>
+  <div class="header-badge">DTW · MediaPipe · v2.0</div>
+</header>
+
+<nav class="tabs">
+  <button class="tab-btn active" onclick="switchTab('detect')">Detect</button>
+  <button class="tab-btn" onclick="switchTab('record')">Record Custom</button>
+  <button class="tab-btn" onclick="switchTab('gestures')">Gestures</button>
+</nav>
+
+<div class="main">
+
+  <!-- ════════════════════════════════
+       DETECT TAB
+  ════════════════════════════════ -->
+  <div id="tab-detect" class="tab-panel active">
+    <div class="detect-layout">
+
+      <!-- Camera -->
+      <div class="camera-section">
+        <div class="camera-wrap">
+          <video id="input_video" style="display:none"></video>
+          <canvas id="output_canvas" width="640" height="480"></canvas>
+          <div class="camera-overlay">
+            <div class="rec-dot" id="rec-dot"></div>
+            <span class="cam-label" id="cam-label">STANDBY</span>
+          </div>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill" id="progress-bar"></div>
+        </div>
+        <div id="status-text">Initializing camera...</div>
+      </div>
+
+      <!-- Right panel -->
+      <div class="right-panel">
+
+        <!-- Detected word -->
+        <div class="result-card">
+          <div class="result-label">Detected Sign</div>
+          <div id="detected-word">---</div>
+          <div id="conf-text"></div>
+        </div>
+
+        <!-- Word queue -->
+        <div class="queue-card">
+          <div class="card-header">
+            <div class="card-title">Word Queue</div>
+            <button class="btn-ghost" onclick="clearQueue()">Clear</button>
+          </div>
+          <div id="word-queue">
+            <div class="queue-empty" id="queue-empty">No words yet. Start signing!</div>
+          </div>
+        </div>
+
+        <!-- AI conversion -->
+        <div class="ai-card">
+          <div class="ai-header">
+            <div class="card-title">AI Sentence</div>
+            <div class="ai-badge">LOCAL SERVER · QWEN</div>
+          </div>
+          <div id="ai-output" style="color:var(--text3); font-style:normal;">Words will appear here as a natural sentence.</div>
+          <button class="btn-primary" id="convert-btn" onclick="convertToSentence()" disabled>
+            ✦ Convert to Sentence
+          </button>
+        </div>
+
+      </div>
+    </div>
   </div>
 
-  <div id="status" style="font-size: 18px; color: #555; margin-top: 10px;">Initializing System...</div>
-  <div id="result" style="font-size: 32px; font-weight: bold; color: #007bff; margin-top: 15px;">WAITING FOR INPUT</div>
+  <!-- ════════════════════════════════
+       RECORD TAB
+  ════════════════════════════════ -->
+  <div id="tab-record" class="tab-panel">
+    <div class="record-layout">
 
-  <script>
-    const videoElement = document.getElementById('input_video');
-    const canvasElement = document.getElementById('output_canvas');
-    const canvasCtx = canvasElement.getContext('2d');
-    const statusDiv = document.getElementById('status');
-    const resultDiv = document.getElementById('result');
+      <div class="record-camera">
+        <div class="record-camera-wrap">
+          <canvas id="record_canvas" width="640" height="480"></canvas>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill" id="record-progress"></div>
+        </div>
+        <div id="record-status-text" style="font-family:var(--mono);font-size:11px;color:var(--text2);">
+          Set a label and click "Start Recording"
+        </div>
+      </div>
 
-    // Setup MediaPipe Hands
-    const hands = new Hands({ 
-      locateFile: f => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${f}` 
+      <div class="record-panel">
+        <div class="section-title">Record New Gesture</div>
+
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <label style="font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:1px;">GESTURE LABEL</label>
+          <div class="input-row">
+            <input class="input-field" id="new-label-input" type="text" placeholder="e.g. thank_you" maxlength="30">
+            <button class="btn-primary" style="width:auto;padding:10px 16px;" onclick="startRecording()">Record</button>
+          </div>
+          <div style="font-family:var(--mono);font-size:10px;color:var(--text3);">
+            Records 5 samples automatically. Show your hand, perform gesture, hide hand to capture.
+          </div>
+        </div>
+
+        <div class="record-status">
+          <div class="result-label">Current Recording</div>
+          <div id="record-label-display">—</div>
+          <div id="record-status-msg" style="color:var(--text3);">Idle</div>
+          <div id="record-count-display">0 / 5 samples</div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <div class="section-title" style="margin-top:0;">Saved Custom Gestures</div>
+          <div class="recordings-list" id="custom-recordings-list">
+            <div style="font-family:var(--mono);font-size:11px;color:var(--text3);padding:10px 0;">
+              No custom gestures yet.
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════
+       GESTURES TAB
+  ════════════════════════════════ -->
+  <div id="tab-gestures" class="tab-panel">
+    <div class="gestures-layout">
+
+      <div class="section-title">All Gestures</div>
+
+      <div class="gestures-section-header">Built-in</div>
+      <div class="gestures-grid" id="builtin-gestures-grid"></div>
+
+      <div class="gestures-section-header" style="margin-top:32px;">Custom (Stored Locally)</div>
+      <div class="gestures-grid" id="custom-gestures-grid">
+        <div class="empty-state" id="custom-empty">No custom gestures recorded yet.</div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<script>
+// ══════════════════════════════════════════════════════════
+// CONFIGURATION
+// ══════════════════════════════════════════════════════════
+const SEQUENCE_LENGTH   = 30;
+const NO_HAND_THRESHOLD = 10;
+const CONF_THRESHOLD    = 0.15;
+const HOLD_FRAMES       = 45;
+const BUILTIN_LABELS    = ["bye","come","drink","eat","go","hello","help","no","stop","yes"];
+const RECORDINGS_NEEDED = 5;
+const LS_CUSTOM_KEY     = "signbridge_custom_templates";
+// AI requests go to the local Python server (server.py)
+// API key is stored in server.py — never exposed in the browser
+const LOCAL_SERVER_URL  = "http://localhost:5000/convert";
+
+let templates   = {};   // { label: [Float32Array[], ...] }
+let wordQueue   = [];
+let customTemplates = {}; // { label: [seq_array, ...] }
+
+// ══════════════════════════════════════════════════════════
+// LOCAL STORAGE — CUSTOM TEMPLATES
+// ══════════════════════════════════════════════════════════
+function saveCustomToLS() {
+  // Convert Float32Arrays to plain arrays for JSON
+  const serializable = {};
+  for (const [label, seqs] of Object.entries(customTemplates)) {
+    serializable[label] = seqs.map(seq => seq.map(frame => Array.from(frame)));
+  }
+  localStorage.setItem(LS_CUSTOM_KEY, JSON.stringify(serializable));
+}
+
+function loadCustomFromLS() {
+  try {
+    const raw = localStorage.getItem(LS_CUSTOM_KEY);
+    if (!raw) return;
+    const parsed = JSON.parse(raw);
+    for (const [label, seqs] of Object.entries(parsed)) {
+      customTemplates[label] = seqs.map(seq => seq.map(frame => new Float32Array(frame)));
+    }
+  } catch(e) { console.warn("Could not load custom templates:", e); }
+}
+
+function mergeCustomIntoTemplates() {
+  for (const [label, seqs] of Object.entries(customTemplates)) {
+    if (!templates[label]) templates[label] = [];
+    // Add only if not already merged
+    const existingCount = (templates[label] || []).length;
+    templates[label] = [...(templates[label] || []), ...seqs];
+  }
+}
+
+// ══════════════════════════════════════════════════════════
+// LOAD BUILT-IN TEMPLATES
+// ══════════════════════════════════════════════════════════
+async function loadTemplates() {
+  try {
+    const res = await fetch("templates.json");
+    if (!res.ok) throw new Error("templates.json not found");
+    const raw = await res.json();
+    for (const label of BUILTIN_LABELS) {
+      if (!raw[label]) { console.warn("Missing label:", label); continue; }
+      templates[label] = raw[label].map(seq => seq.map(frame => new Float32Array(frame)));
+    }
+    loadCustomFromLS();
+    mergeCustomIntoTemplates();
+    updateRecordingsListUI();
+    refreshGesturesTab();
+    document.getElementById("status-text").textContent = "Templates ready! Show your hand to begin.";
+  } catch(e) {
+    loadCustomFromLS();
+    mergeCustomIntoTemplates();
+    updateRecordingsListUI();
+    refreshGesturesTab();
+    document.getElementById("status-text").textContent = "templates.json not found — custom gestures only.";
+    console.warn(e);
+  }
+}
+
+// ══════════════════════════════════════════════════════════
+// PRE-PROCESSING
+// ══════════════════════════════════════════════════════════
+function normalizeSequence(seq) {
+  const T = seq.length, D = seq[0].length;
+  const mean = new Float32Array(D), std = new Float32Array(D);
+  for (let t = 0; t < T; t++) for (let d = 0; d < D; d++) mean[d] += seq[t][d];
+  for (let d = 0; d < D; d++) mean[d] /= T;
+  for (let t = 0; t < T; t++) for (let d = 0; d < D; d++) std[d] += (seq[t][d] - mean[d]) ** 2;
+  for (let d = 0; d < D; d++) std[d] = Math.sqrt(std[d] / T) + 1e-6;
+  return seq.map(frame => {
+    const out = new Float32Array(D);
+    for (let d = 0; d < D; d++) out[d] = (frame[d] - mean[d]) / std[d];
+    return out;
+  });
+}
+
+function resizeSequence(seq, targetLen = SEQUENCE_LENGTH) {
+  if (seq.length === targetLen) return seq;
+  const out = [];
+  for (let i = 0; i < targetLen; i++) {
+    const idx = Math.round(i * (seq.length - 1) / (targetLen - 1));
+    out.push(seq[idx]);
+  }
+  return out;
+}
+
+// ══════════════════════════════════════════════════════════
+// DTW
+// ══════════════════════════════════════════════════════════
+function dtwDistance(seq1, seq2) {
+  const n = seq1.length, m = seq2.length;
+  const dtw = new Float32Array((n + 1) * (m + 1)).fill(Infinity);
+  dtw[0] = 0;
+  for (let i = 1; i <= n; i++) {
+    for (let j = 1; j <= m; j++) {
+      let cost = 0;
+      const a = seq1[i-1], b = seq2[j-1];
+      for (let d = 0; d < a.length; d++) cost += (a[d] - b[d]) ** 2;
+      cost = Math.sqrt(cost);
+      const prev = Math.min(dtw[(i-1)*(m+1)+j], dtw[i*(m+1)+(j-1)], dtw[(i-1)*(m+1)+(j-1)]);
+      dtw[i*(m+1)+j] = cost + prev;
+    }
+  }
+  return dtw[n*(m+1)+m] / (n + m);
+}
+
+function predict(querySeq) {
+  const query = normalizeSequence(resizeSequence(querySeq));
+  const labelDists = {};
+  for (const label of Object.keys(templates)) {
+    const seqs = templates[label];
+    if (!seqs || seqs.length === 0) continue;
+    const dists = seqs.map(tmpl => dtwDistance(query, normalizeSequence(tmpl))).sort((a,b)=>a-b);
+    const topK = dists.slice(0, 3);
+    labelDists[label] = topK.reduce((s,v)=>s+v,0) / topK.length;
+  }
+  const entries = Object.entries(labelDists);
+  if (entries.length === 0) return { label: "?", confidence: 0 };
+  entries.sort((a,b) => a[1] - b[1]);
+  const bestLabel = entries[0][0], bestDist = entries[0][1];
+  const worstDist = entries[entries.length-1][1];
+  const confidence = 1.0 - bestDist / (worstDist + 1e-6);
+  return { label: bestLabel, confidence };
+}
+
+// ══════════════════════════════════════════════════════════
+// LANDMARK EXTRACTION
+// ══════════════════════════════════════════════════════════
+function extractLandmarks(results) {
+  const leftArray = new Float32Array(63), rightArray = new Float32Array(63);
+  if (results.multiHandLandmarks && results.multiHandedness) {
+    results.multiHandLandmarks.forEach((handLm, idx) => {
+      const label = results.multiHandedness[idx].label;
+      const targetArr = (label === "Right") ? leftArray : rightArray;
+      handLm.forEach((pt, i) => {
+        targetArr[i*3]   = 1.0 - pt.x;
+        targetArr[i*3+1] = pt.y;
+        targetArr[i*3+2] = pt.z;
+      });
+    });
+  }
+  const combined = new Float32Array(126);
+  combined.set(leftArray, 0);
+  combined.set(rightArray, 63);
+  return combined;
+}
+
+// ══════════════════════════════════════════════════════════
+// DETECT STATE MACHINE
+// ══════════════════════════════════════════════════════════
+const detectState = {
+  sequence: [], isRecording: false, noHandCount: 0,
+  resultText: "", resultConf: 0, resultHold: 0
+};
+
+function updateDetector(frameVec, handDetected) {
+  if (handDetected) {
+    detectState.noHandCount = 0;
+    if (!detectState.isRecording) {
+      detectState.isRecording = true;
+      detectState.sequence = [];
+    }
+    detectState.sequence.push(frameVec);
+  } else {
+    detectState.noHandCount++;
+    if (detectState.isRecording && detectState.noHandCount >= NO_HAND_THRESHOLD) {
+      if (detectState.sequence.length >= 8) {
+        const { label, confidence } = predict(detectState.sequence);
+        if (confidence >= CONF_THRESHOLD) {
+          detectState.resultText = label.toUpperCase();
+          detectState.resultConf = confidence;
+          // Auto add to queue
+          addWordToQueue(label.toUpperCase());
+        } else {
+          detectState.resultText = "UNKNOWN";
+          detectState.resultConf = confidence;
+        }
+        detectState.resultHold = HOLD_FRAMES;
+      }
+      detectState.isRecording = false;
+      detectState.sequence = [];
+      detectState.noHandCount = 0;
+    }
+  }
+  if (detectState.resultHold > 0) detectState.resultHold--;
+  else detectState.resultText = "";
+}
+
+// ══════════════════════════════════════════════════════════
+// DETECT UI
+// ══════════════════════════════════════════════════════════
+const detectCanvas  = document.getElementById("output_canvas");
+const detectCtx     = detectCanvas.getContext("2d");
+const progressBar   = document.getElementById("progress-bar");
+const statusText    = document.getElementById("status-text");
+const detectedWord  = document.getElementById("detected-word");
+const confText      = document.getElementById("conf-text");
+const recDot        = document.getElementById("rec-dot");
+const camLabel      = document.getElementById("cam-label");
+
+function drawDetectUI(handDetected) {
+  if (detectState.isRecording) {
+    const pct = Math.min(detectState.sequence.length / SEQUENCE_LENGTH * 100, 100);
+    progressBar.style.width = pct + "%";
+    statusText.textContent = `Recording… ${detectState.sequence.length} frames`;
+    recDot.classList.add("active");
+    camLabel.textContent = "REC";
+  } else {
+    progressBar.style.width = "0%";
+    statusText.textContent = handDetected ? "Hand detected — start signing" : "Show your hand to begin";
+    recDot.classList.remove("active");
+    camLabel.textContent = handDetected ? "TRACKING" : "STANDBY";
+  }
+
+  if (detectState.resultText && detectState.resultHold > 0) {
+    detectedWord.textContent = detectState.resultText;
+    detectedWord.className = detectState.resultText === "UNKNOWN" ? "unknown" : "has-result";
+    confText.textContent = `${(detectState.resultConf * 100).toFixed(0)}% confidence`;
+  } else if (!detectState.resultText) {
+    detectedWord.textContent = "---";
+    detectedWord.className = "";
+    confText.textContent = "";
+  }
+}
+
+// ══════════════════════════════════════════════════════════
+// WORD QUEUE
+// ══════════════════════════════════════════════════════════
+function addWordToQueue(word) {
+  wordQueue.push(word);
+  renderQueue();
+  document.getElementById("convert-btn").disabled = false;
+}
+
+function removeWordFromQueue(idx) {
+  wordQueue.splice(idx, 1);
+  renderQueue();
+  if (wordQueue.length === 0) {
+    document.getElementById("convert-btn").disabled = true;
+    document.getElementById("ai-output").textContent = "Words will appear here as a natural sentence.";
+    document.getElementById("ai-output").style.color = "var(--text3)";
+    document.getElementById("ai-output").style.fontStyle = "normal";
+  }
+}
+
+function clearQueue() {
+  wordQueue = [];
+  renderQueue();
+  document.getElementById("convert-btn").disabled = true;
+  document.getElementById("ai-output").textContent = "Words will appear here as a natural sentence.";
+  document.getElementById("ai-output").style.color = "var(--text3)";
+  document.getElementById("ai-output").style.fontStyle = "normal";
+}
+
+function renderQueue() {
+  const container = document.getElementById("word-queue");
+  const empty = document.getElementById("queue-empty");
+  if (wordQueue.length === 0) {
+    container.innerHTML = '<div class="queue-empty" id="queue-empty">No words yet. Start signing!</div>';
+    return;
+  }
+  container.innerHTML = wordQueue.map((w, i) =>
+    `<div class="word-chip">${w}<span class="chip-del" onclick="removeWordFromQueue(${i})">×</span></div>`
+  ).join("");
+}
+
+// ══════════════════════════════════════════════════════════
+// AI SENTENCE CONVERSION — via local server.py (API key lives there)
+// ══════════════════════════════════════════════════════════
+async function convertToSentence() {
+  if (wordQueue.length === 0) return;
+
+  const output = document.getElementById("ai-output");
+  const btn    = document.getElementById("convert-btn");
+  btn.disabled = true;
+
+  output.innerHTML = '<div class="ai-thinking"><span></span><span></span><span></span></div>';
+
+  try {
+    const res = await fetch(LOCAL_SERVER_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ words: wordQueue })
     });
 
-    hands.setOptions({ 
-      maxNumHands: 2, 
-      modelComplexity: 1,
-      minDetectionConfidence: 0.5, 
-      minTrackingConfidence: 0.5 
+    const data = await res.json();
+
+    if (!res.ok) {
+      output.textContent = data.error || `Server error (HTTP ${res.status})`;
+      output.style.color = "var(--red)";
+      output.style.fontStyle = "normal";
+      return;
+    }
+
+    output.textContent = data.sentence || "Could not generate sentence.";
+    output.style.color = "var(--text)";
+    output.style.fontStyle = "italic";
+  } catch(e) {
+    output.textContent = "Cannot reach server.py — is it running? (python server.py)";
+    output.style.color = "var(--red)";
+    output.style.fontStyle = "normal";
+    console.error(e);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "✦ Convert to Sentence";
+  }
+}
+
+// ══════════════════════════════════════════════════════════
+// RECORDING — CUSTOM GESTURES
+// ══════════════════════════════════════════════════════════
+const recordCanvas  = document.getElementById("record_canvas");
+const recordCtx     = recordCanvas.getContext("2d");
+const recordProg    = document.getElementById("record-progress");
+const recordStatMsg = document.getElementById("record-status-msg");
+const recordCountEl = document.getElementById("record-count-display");
+const recordLabelEl = document.getElementById("record-label-display");
+const recordStatTxt = document.getElementById("record-status-text");
+
+let recordingActive   = false;
+let recordLabel       = "";
+let recordSamples     = [];   // collected sequences
+let recordSeq         = [];
+let recordIsRecording = false;
+let recordNoHand      = 0;
+
+function startRecording() {
+  const labelRaw = document.getElementById("new-label-input").value.trim().toLowerCase().replace(/\s+/g,"_");
+  if (!labelRaw) { showToast("Enter a label first!"); return; }
+
+  recordLabel     = labelRaw;
+  recordSamples   = [];
+  recordSeq       = [];
+  recordIsRecording = false;
+  recordNoHand    = 0;
+  recordingActive = true;
+
+  recordLabelEl.textContent = labelRaw.toUpperCase();
+  recordLabelEl.classList.add("active");
+  recordStatMsg.textContent = "Show your hand to begin...";
+  recordCountEl.textContent = `0 / ${RECORDINGS_NEEDED} samples`;
+  recordStatTxt.textContent = "Recording in progress — show hand, gesture, hide hand";
+
+  switchTab("record");
+}
+
+function stopRecording(reason) {
+  recordingActive = false;
+  recordLabelEl.classList.remove("active");
+  recordStatMsg.textContent = reason || "Done";
+  recordStatTxt.textContent = "Recording stopped.";
+  recordProg.style.width = "0%";
+}
+
+function processRecordFrame(results) {
+  if (!recordingActive) return;
+
+  recordCtx.save();
+  recordCtx.clearRect(0, 0, recordCanvas.width, recordCanvas.height);
+  recordCtx.drawImage(results.image, 0, 0, recordCanvas.width, recordCanvas.height);
+  if (results.multiHandLandmarks) {
+    results.multiHandLandmarks.forEach(handLm => {
+      drawConnectors(recordCtx, handLm, HAND_CONNECTIONS, { color: "#ff6a9d", lineWidth: 3 });
+      drawLandmarks(recordCtx, handLm, { color: "#fff", lineWidth: 1 });
     });
+  }
+  recordCtx.restore();
 
-    // This function runs every time MediaPipe detects a frame
-    hands.onResults(results => {
-      // 1. Draw the video frame to the canvas
-      canvasCtx.save();
-      canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
-      canvasCtx.drawImage(results.image, 0, 0, canvasElement.width, canvasElement.height);
+  const handDetected = results.multiHandLandmarks && results.multiHandLandmarks.length > 0;
+  const frameVec = extractLandmarks(results);
 
-      if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
-        statusDiv.textContent = "Hand Detected";
-        
-        for (const landmarks of results.multiHandLandmarks) {
-          // 2. Draw the skeleton connectors
-          drawConnectors(canvasCtx, landmarks, HAND_CONNECTIONS,
-            { color: '#00FF00', lineWidth: 3 });
-          
-          // 3. Draw the landmark points
-          drawLandmarks(canvasCtx, landmarks, 
-            { color: '#FF0000', lineWidth: 1 });
+  if (handDetected) {
+    recordNoHand = 0;
+    if (!recordIsRecording) {
+      recordIsRecording = true;
+      recordSeq = [];
+    }
+    recordSeq.push(frameVec);
+    const pct = Math.min(recordSeq.length / SEQUENCE_LENGTH * 100, 100);
+    recordProg.style.width = pct + "%";
+    recordStatMsg.textContent = `Recording sample ${recordSamples.length + 1}… (${recordSeq.length} frames)`;
+  } else {
+    recordNoHand++;
+    if (recordIsRecording && recordNoHand >= NO_HAND_THRESHOLD) {
+      if (recordSeq.length >= 8) {
+        // Save this sample
+        const resized = resizeSequence(recordSeq, SEQUENCE_LENGTH);
+        const arr = resized.map(f => new Float32Array(f));
+        recordSamples.push(arr);
 
-          // TODO: Add your prediction logic here using your .h5/.json model
-          resultDiv.textContent = 'DETECTING GESTURE...';
+        const count = recordSamples.length;
+        recordCountEl.textContent = `${count} / ${RECORDINGS_NEEDED} samples`;
+        recordStatMsg.textContent = count < RECORDINGS_NEEDED
+          ? `Sample ${count} saved! Show hand for next...`
+          : "All samples recorded!";
+
+        if (count >= RECORDINGS_NEEDED) {
+          saveCustomGesture(recordLabel, recordSamples);
+          stopRecording(`"${recordLabel}" saved with ${count} samples!`);
+          showToast(`✓ "${recordLabel}" saved to local storage`);
         }
       } else {
-        statusDiv.textContent = "No hands in view";
-        resultDiv.textContent = "---";
+        recordStatMsg.textContent = "Too short — try again";
       }
-      canvasCtx.restore();
-    });
+      recordIsRecording = false;
+      recordSeq = [];
+      recordNoHand = 0;
+      recordProg.style.width = "0%";
+    }
+  }
+}
 
-    // Setup Camera
-    const camera = new Camera(videoElement, {
-      onFrame: async () => {
-        await hands.send({ image: videoElement });
-      },
-      width: 640,
-      height: 480
-    });
+function saveCustomGesture(label, samples) {
+  // Store in customTemplates
+  customTemplates[label] = samples;
+  saveCustomToLS();
 
-    camera.start().then(() => {
-      statusDiv.textContent = "Camera Started - System Ready";
-    });
+  // Also inject into active templates
+  templates[label] = [...(templates[label] || []), ...samples];
 
-  </script>
+  updateRecordingsListUI();
+  refreshGesturesTab();
+}
+
+function deleteCustomGesture(label) {
+  delete customTemplates[label];
+  saveCustomToLS();
+
+  // Rebuild templates for this label from built-in only
+  // If built-in existed, restore; if not, delete
+  if (templates[label]) {
+    // Remove all entries — we can't distinguish at this point, so we rebuild from the JSON
+    // For simplicity, mark as empty so it won't be used
+    delete templates[label];
+  }
+
+  updateRecordingsListUI();
+  refreshGesturesTab();
+  showToast(`"${label}" deleted`);
+}
+
+function updateRecordingsListUI() {
+  const list = document.getElementById("custom-recordings-list");
+  const labels = Object.keys(customTemplates);
+  if (labels.length === 0) {
+    list.innerHTML = '<div style="font-family:var(--mono);font-size:11px;color:var(--text3);padding:10px 0;">No custom gestures yet.</div>';
+    return;
+  }
+  list.innerHTML = labels.map(label =>
+    `<div class="recording-item">
+      <div class="recording-item-label">${label.toUpperCase()}</div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <div class="recording-item-count">${customTemplates[label].length} samples</div>
+        <button class="btn-sm danger" onclick="deleteCustomGesture('${label}')">Delete</button>
+      </div>
+    </div>`
+  ).join("");
+}
+
+// ══════════════════════════════════════════════════════════
+// GESTURES TAB
+// ══════════════════════════════════════════════════════════
+function refreshGesturesTab() {
+  // Built-in
+  const builtinGrid = document.getElementById("builtin-gestures-grid");
+  builtinGrid.innerHTML = BUILTIN_LABELS.map(label =>
+    `<div class="gesture-card">
+      <div class="gesture-tag builtin">BUILT-IN</div>
+      <div class="gesture-name">${label}</div>
+      <div class="gesture-meta">${(templates[label] || []).length} template(s)</div>
+      <div class="gesture-actions">
+        <button class="btn-sm" onclick="manualAddToQueue('${label.toUpperCase()}')">Add to queue</button>
+      </div>
+    </div>`
+  ).join("");
+
+  // Custom
+  const customGrid = document.getElementById("custom-gestures-grid");
+  const customLabels = Object.keys(customTemplates);
+  if (customLabels.length === 0) {
+    customGrid.innerHTML = '<div class="empty-state" id="custom-empty">No custom gestures recorded yet.</div>';
+    return;
+  }
+  customGrid.innerHTML = customLabels.map(label =>
+    `<div class="gesture-card custom">
+      <div class="gesture-tag custom">CUSTOM</div>
+      <div class="gesture-name">${label}</div>
+      <div class="gesture-meta">${customTemplates[label].length} sample(s) · local</div>
+      <div class="gesture-actions">
+        <button class="btn-sm" onclick="manualAddToQueue('${label.toUpperCase()}')">Add to queue</button>
+        <button class="btn-sm danger" onclick="deleteCustomGesture('${label}')">Delete</button>
+      </div>
+    </div>`
+  ).join("");
+}
+
+function manualAddToQueue(word) {
+  addWordToQueue(word);
+  switchTab("detect");
+  showToast(`"${word}" added to queue`);
+}
+
+// ══════════════════════════════════════════════════════════
+// MEDIAPIPE CORE
+// ══════════════════════════════════════════════════════════
+const hands = new Hands({
+  locateFile: f => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${f}`
+});
+
+hands.setOptions({
+  maxNumHands: 2,
+  modelComplexity: 1,
+  minDetectionConfidence: 0.5,
+  minTrackingConfidence: 0.5,
+});
+
+hands.onResults(results => {
+  // Always draw to detect canvas when detect tab is active
+  if (currentTab === "detect") {
+    detectCtx.save();
+    detectCtx.clearRect(0, 0, detectCanvas.width, detectCanvas.height);
+    detectCtx.drawImage(results.image, 0, 0, detectCanvas.width, detectCanvas.height);
+    if (results.multiHandLandmarks) {
+      results.multiHandLandmarks.forEach(handLm => {
+        drawConnectors(detectCtx, handLm, HAND_CONNECTIONS, { color: "#7c6aff", lineWidth: 3 });
+        drawLandmarks(detectCtx, handLm, { color: "#ff6a9d", lineWidth: 1 });
+      });
+    }
+    detectCtx.restore();
+
+    const handDetected = !!(results.multiHandLandmarks && results.multiHandLandmarks.length > 0);
+    const frameVec = extractLandmarks(results);
+    updateDetector(frameVec, handDetected);
+    drawDetectUI(handDetected);
+  }
+
+  // Record tab processing
+  if (currentTab === "record") {
+    if (recordingActive) {
+      processRecordFrame(results);
+    } else {
+      // Just show camera feed
+      recordCtx.save();
+      recordCtx.clearRect(0, 0, recordCanvas.width, recordCanvas.height);
+      recordCtx.drawImage(results.image, 0, 0, recordCanvas.width, recordCanvas.height);
+      if (results.multiHandLandmarks) {
+        results.multiHandLandmarks.forEach(handLm => {
+          drawConnectors(recordCtx, handLm, HAND_CONNECTIONS, { color: "#7c6aff", lineWidth: 2 });
+          drawLandmarks(recordCtx, handLm, { color: "#fff", lineWidth: 1 });
+        });
+      }
+      recordCtx.restore();
+    }
+  }
+});
+
+// ══════════════════════════════════════════════════════════
+// TAB SWITCHING
+// ══════════════════════════════════════════════════════════
+let currentTab = "detect";
+
+function switchTab(name) {
+  currentTab = name;
+  document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
+  document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+  document.getElementById("tab-" + name).classList.add("active");
+  document.querySelectorAll(".tab-btn").forEach(b => {
+    if (b.textContent.toLowerCase().includes(name === "detect" ? "detect" : name === "record" ? "record" : "gesture")) {
+      b.classList.add("active");
+    }
+  });
+}
+
+// ══════════════════════════════════════════════════════════
+// TOAST
+// ══════════════════════════════════════════════════════════
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove("show"), 2500);
+}
+
+// ══════════════════════════════════════════════════════════
+// STARTUP
+// ══════════════════════════════════════════════════════════
+const videoEl = document.getElementById("input_video");
+const camera  = new Camera(videoEl, {
+  onFrame: async () => { await hands.send({ image: videoEl }); },
+  width: 640, height: 480,
+});
+
+loadTemplates().then(() => camera.start());
+refreshGesturesTab();
+</script>
 </body>
 </html>
