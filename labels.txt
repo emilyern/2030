@@ -1,0 +1,23 @@
+bye
+come
+drink
+eat
+go
+hello
+no
+stop
+yes
+who
+what 
+when
+where
+why
+how
+sorry
+help
+thank you
+bathroom
+me/I
+you
+He/She/It
+We
