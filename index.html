@@ -34,7 +34,6 @@
       overflow-x: hidden;
     }
 
-    /* ── Background grid ── */
     body::before {
       content: '';
       position: fixed; inset: 0;
@@ -46,7 +45,6 @@
       z-index: 0;
     }
 
-    /* ── Header ── */
     header {
       position: relative; z-index: 10;
       display: flex; align-items: center; justify-content: space-between;
@@ -56,85 +54,86 @@
       backdrop-filter: blur(20px);
     }
 
-    .logo {
-      font-family: var(--mono);
-      font-size: 18px; font-weight: 700;
-      letter-spacing: -0.5px;
-    }
+    .logo { font-family: var(--mono); font-size: 18px; font-weight: 700; letter-spacing: -0.5px; }
     .logo span { color: var(--accent); }
 
+    .header-right { display: flex; align-items: center; gap: 12px; }
+
     .header-badge {
-      font-family: var(--mono);
-      font-size: 11px;
+      font-family: var(--mono); font-size: 11px;
       padding: 4px 10px;
-      border: 1px solid var(--border);
-      border-radius: 20px;
+      border: 1px solid var(--border); border-radius: 20px;
       color: var(--text2);
     }
 
-    /* ── Tabs ── */
+    /* ── API Key input in header ── */
+    .api-key-wrap {
+      display: flex; align-items: center; gap: 6px;
+    }
+    .api-key-input {
+      font-family: var(--mono); font-size: 10px;
+      padding: 4px 10px;
+      background: var(--surface2);
+      border: 1px solid var(--border); border-radius: 6px;
+      color: var(--text2);
+      outline: none; width: 200px;
+      transition: border-color 0.2s;
+    }
+    .api-key-input:focus { border-color: var(--accent); color: var(--text); }
+    .api-key-input::placeholder { color: var(--text3); }
+    .api-key-label {
+      font-family: var(--mono); font-size: 9px;
+      color: var(--text3); letter-spacing: 1px;
+      white-space: nowrap;
+    }
+    .api-key-status {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--text3); flex-shrink: 0;
+      transition: background 0.3s;
+    }
+    .api-key-status.ok { background: var(--green); }
+
     .tabs {
       position: relative; z-index: 10;
-      display: flex; gap: 0;
-      padding: 0 32px;
+      display: flex; padding: 0 32px;
       border-bottom: 1px solid var(--border);
       background: rgba(10,10,15,0.6);
     }
 
     .tab-btn {
-      font-family: var(--sans);
-      font-size: 13px; font-weight: 500;
+      font-family: var(--sans); font-size: 13px; font-weight: 500;
       padding: 14px 22px;
-      background: none; border: none;
-      color: var(--text3);
-      cursor: pointer;
-      border-bottom: 2px solid transparent;
-      transition: all 0.2s;
-      letter-spacing: 0.3px;
+      background: none; border: none; color: var(--text3);
+      cursor: pointer; border-bottom: 2px solid transparent;
+      transition: all 0.2s; letter-spacing: 0.3px;
     }
     .tab-btn:hover { color: var(--text2); }
-    .tab-btn.active {
-      color: var(--accent);
-      border-bottom-color: var(--accent);
-    }
+    .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
 
-    /* ── Main layout ── */
     .main { position: relative; z-index: 5; }
-
     .tab-panel { display: none; }
     .tab-panel.active { display: block; }
 
-    /* ══════════════════════════════
-       DETECT TAB
-    ══════════════════════════════ */
+    /* ══ DETECT TAB ══ */
     .detect-layout {
-      display: grid;
-      grid-template-columns: 1fr 360px;
-      gap: 0;
+      display: grid; grid-template-columns: 1fr 360px;
       min-height: calc(100vh - 120px);
     }
 
-    /* Camera side */
     .camera-section {
       padding: 28px 24px 28px 32px;
       display: flex; flex-direction: column; gap: 16px;
     }
 
     .camera-wrap {
-      position: relative;
-      border-radius: 16px;
-      overflow: hidden;
-      border: 1px solid var(--border);
-      background: #000;
-      aspect-ratio: 4/3;
-      max-width: 640px;
+      position: relative; border-radius: 16px; overflow: hidden;
+      border: 1px solid var(--border); background: #000;
+      aspect-ratio: 4/3; max-width: 640px;
     }
 
     #output_canvas {
-      width: 100%; height: 100%;
-      display: block;
-      transform: rotateY(180deg);
-      -webkit-transform: rotateY(180deg);
+      width: 100%; height: 100%; display: block;
+      transform: rotateY(180deg); -webkit-transform: rotateY(180deg);
     }
 
     .camera-overlay {
@@ -144,456 +143,264 @@
 
     .rec-dot {
       width: 8px; height: 8px; border-radius: 50%;
-      background: var(--text3);
-      transition: background 0.2s;
+      background: var(--text3); transition: background 0.2s;
     }
     .rec-dot.active { background: var(--red); animation: pulse 1s infinite; }
 
-    @keyframes pulse {
-      0%,100% { opacity: 1; } 50% { opacity: 0.3; }
-    }
+    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
 
-    .cam-label {
-      font-family: var(--mono);
-      font-size: 10px; color: var(--text2);
-      letter-spacing: 1px;
-    }
+    .cam-label { font-family: var(--mono); font-size: 10px; color: var(--text2); letter-spacing: 1px; }
 
-    /* Progress bar */
     .progress-track {
-      height: 3px;
-      background: var(--surface3);
-      border-radius: 2px;
-      overflow: hidden;
-      max-width: 640px;
+      height: 3px; background: var(--surface3); border-radius: 2px;
+      overflow: hidden; max-width: 640px;
     }
     .progress-fill {
       height: 100%; width: 0%;
       background: linear-gradient(90deg, var(--accent), var(--accent2));
-      transition: width 0.05s linear;
-      border-radius: 2px;
+      transition: width 0.05s linear; border-radius: 2px;
     }
 
-    #status-text {
-      font-family: var(--mono);
-      font-size: 11px; color: var(--text2);
-      letter-spacing: 0.5px;
-    }
+    #status-text { font-family: var(--mono); font-size: 11px; color: var(--text2); letter-spacing: 0.5px; }
 
-    /* Right panel */
     .right-panel {
       border-left: 1px solid var(--border);
       padding: 28px 24px;
       display: flex; flex-direction: column; gap: 20px;
     }
 
-    /* Result card */
     .result-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 24px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 16px; padding: 24px;
       display: flex; flex-direction: column; gap: 8px;
     }
 
     .result-label {
-      font-family: var(--mono);
-      font-size: 10px; color: var(--text3);
+      font-family: var(--mono); font-size: 10px; color: var(--text3);
       letter-spacing: 1.5px; text-transform: uppercase;
     }
 
     #detected-word {
-      font-family: var(--mono);
-      font-size: 52px; font-weight: 700;
-      color: var(--text3);
-      letter-spacing: -2px;
-      line-height: 1;
-      transition: color 0.3s;
-      min-height: 56px;
+      font-family: var(--mono); font-size: 52px; font-weight: 700;
+      color: var(--text3); letter-spacing: -2px; line-height: 1;
+      transition: color 0.3s; min-height: 56px;
     }
     #detected-word.has-result { color: var(--green); }
     #detected-word.unknown { color: var(--red); }
 
-    #conf-text {
-      font-family: var(--mono);
-      font-size: 12px; color: var(--text3);
-    }
+    #conf-text { font-family: var(--mono); font-size: 12px; color: var(--text3); }
 
-    /* Word queue */
     .queue-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 20px;
-      flex: 1;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 16px; padding: 20px; flex: 1;
       display: flex; flex-direction: column; gap: 12px;
     }
 
-    .card-header {
-      display: flex; justify-content: space-between; align-items: center;
-    }
+    .card-header { display: flex; justify-content: space-between; align-items: center; }
 
     .card-title {
-      font-family: var(--mono);
-      font-size: 10px; color: var(--text3);
+      font-family: var(--mono); font-size: 10px; color: var(--text3);
       letter-spacing: 1.5px; text-transform: uppercase;
     }
 
     .btn-ghost {
-      font-family: var(--mono);
-      font-size: 10px;
-      padding: 5px 10px;
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      background: none;
-      color: var(--text2);
-      cursor: pointer;
-      transition: all 0.2s;
-      letter-spacing: 0.5px;
+      font-family: var(--mono); font-size: 10px;
+      padding: 5px 10px; border: 1px solid var(--border); border-radius: 6px;
+      background: none; color: var(--text2); cursor: pointer;
+      transition: all 0.2s; letter-spacing: 0.5px;
     }
     .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
 
-    #word-queue {
-      display: flex; flex-wrap: wrap; gap: 8px;
-      min-height: 60px;
-    }
+    #word-queue { display: flex; flex-wrap: wrap; gap: 8px; min-height: 60px; }
 
     .word-chip {
-      font-family: var(--mono);
-      font-size: 12px;
-      padding: 6px 12px;
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 20px;
-      color: var(--text);
-      display: flex; align-items: center; gap: 6px;
+      font-family: var(--mono); font-size: 12px;
+      padding: 6px 12px; background: var(--surface2);
+      border: 1px solid var(--border); border-radius: 20px;
+      color: var(--text); display: flex; align-items: center; gap: 6px;
       animation: chipIn 0.2s ease;
     }
 
-    @keyframes chipIn {
-      from { opacity: 0; transform: scale(0.8); }
-      to   { opacity: 1; transform: scale(1); }
-    }
+    @keyframes chipIn { from { opacity: 0; transform: scale(0.8); } to { opacity: 1; transform: scale(1); } }
 
-    .chip-del {
-      cursor: pointer; color: var(--text3);
-      font-size: 14px; line-height: 1;
-      transition: color 0.15s;
-    }
+    .chip-del { cursor: pointer; color: var(--text3); font-size: 14px; line-height: 1; transition: color 0.15s; }
     .chip-del:hover { color: var(--red); }
 
-    .queue-empty {
-      font-family: var(--mono);
-      font-size: 11px; color: var(--text3);
-      text-align: center; padding: 16px 0;
-    }
+    .queue-empty { font-family: var(--mono); font-size: 11px; color: var(--text3); text-align: center; padding: 16px 0; }
 
-    /* AI sentence */
     .ai-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 20px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 16px; padding: 20px;
       display: flex; flex-direction: column; gap: 12px;
     }
 
-    .ai-header {
-      display: flex; justify-content: space-between; align-items: center;
-    }
+    .ai-header { display: flex; justify-content: space-between; align-items: center; }
 
     .ai-badge {
-      font-family: var(--mono);
-      font-size: 9px;
-      padding: 3px 8px;
+      font-family: var(--mono); font-size: 9px; padding: 3px 8px;
       background: linear-gradient(135deg, rgba(124,106,255,0.2), rgba(255,106,157,0.2));
-      border: 1px solid rgba(124,106,255,0.3);
-      border-radius: 20px;
-      color: var(--accent);
-      letter-spacing: 1px;
+      border: 1px solid rgba(124,106,255,0.3); border-radius: 20px;
+      color: var(--accent); letter-spacing: 1px;
     }
 
     .btn-primary {
-      font-family: var(--mono);
-      font-size: 11px;
-      padding: 8px 16px;
-      background: var(--accent);
-      border: none;
-      border-radius: 8px;
-      color: #fff;
-      cursor: pointer;
-      transition: all 0.2s;
-      letter-spacing: 0.5px;
-      width: 100%;
+      font-family: var(--mono); font-size: 11px; padding: 8px 16px;
+      background: var(--accent); border: none; border-radius: 8px;
+      color: #fff; cursor: pointer; transition: all 0.2s;
+      letter-spacing: 0.5px; width: 100%;
     }
     .btn-primary:hover { background: #9080ff; transform: translateY(-1px); }
     .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
 
-    #ai-output {
-      font-family: var(--sans);
-      font-size: 14px; line-height: 1.6;
-      color: var(--text);
-      min-height: 48px;
-      font-style: italic;
-    }
+    #ai-output { font-family: var(--sans); font-size: 14px; line-height: 1.6; color: var(--text); min-height: 48px; font-style: italic; }
 
-    .ai-thinking {
-      display: flex; gap: 4px; align-items: center;
-      padding: 4px 0;
-    }
+    .ai-thinking { display: flex; gap: 4px; align-items: center; padding: 4px 0; }
     .ai-thinking span {
       width: 6px; height: 6px; border-radius: 50%;
-      background: var(--accent);
-      animation: blink 1.2s infinite;
+      background: var(--accent); animation: blink 1.2s infinite;
     }
     .ai-thinking span:nth-child(2) { animation-delay: 0.2s; }
     .ai-thinking span:nth-child(3) { animation-delay: 0.4s; }
 
-    @keyframes blink {
-      0%,80%,100% { opacity: 0.2; transform: scale(0.8); }
-      40% { opacity: 1; transform: scale(1); }
-    }
+    @keyframes blink { 0%,80%,100% { opacity: 0.2; transform: scale(0.8); } 40% { opacity: 1; transform: scale(1); } }
 
-    /* ══════════════════════════════
-       RECORD TAB
-    ══════════════════════════════ */
+    /* ══ RECORD TAB ══ */
     .record-layout {
-      display: grid;
-      grid-template-columns: 1fr 380px;
-      gap: 0;
+      display: grid; grid-template-columns: 1fr 380px;
       min-height: calc(100vh - 120px);
     }
 
-    .record-camera {
-      padding: 28px 24px 28px 32px;
-      display: flex; flex-direction: column; gap: 16px;
-    }
+    .record-camera { padding: 28px 24px 28px 32px; display: flex; flex-direction: column; gap: 16px; }
 
     .record-panel {
       border-left: 1px solid var(--border);
-      padding: 28px 24px;
-      display: flex; flex-direction: column; gap: 20px;
+      padding: 28px 24px; display: flex; flex-direction: column; gap: 20px;
     }
 
     .section-title {
-      font-family: var(--mono);
-      font-size: 11px; font-weight: 700;
-      color: var(--text2);
-      letter-spacing: 2px; text-transform: uppercase;
-      padding-bottom: 12px;
-      border-bottom: 1px solid var(--border);
+      font-family: var(--mono); font-size: 11px; font-weight: 700;
+      color: var(--text2); letter-spacing: 2px; text-transform: uppercase;
+      padding-bottom: 12px; border-bottom: 1px solid var(--border);
     }
 
-    .input-row {
-      display: flex; gap: 10px;
-    }
+    .input-row { display: flex; gap: 10px; }
 
     .input-field {
-      flex: 1;
-      font-family: var(--mono);
-      font-size: 13px;
-      padding: 10px 14px;
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      color: var(--text);
-      outline: none;
-      transition: border-color 0.2s;
+      flex: 1; font-family: var(--mono); font-size: 13px;
+      padding: 10px 14px; background: var(--surface2);
+      border: 1px solid var(--border); border-radius: 8px;
+      color: var(--text); outline: none; transition: border-color 0.2s;
     }
     .input-field:focus { border-color: var(--accent); }
     .input-field::placeholder { color: var(--text3); }
 
     .record-status {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 20px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 12px; padding: 20px;
       display: flex; flex-direction: column; gap: 10px;
     }
 
     #record-label-display {
-      font-family: var(--mono);
-      font-size: 28px; font-weight: 700;
-      color: var(--text3);
-      letter-spacing: -1px;
+      font-family: var(--mono); font-size: 28px; font-weight: 700;
+      color: var(--text3); letter-spacing: -1px;
     }
     #record-label-display.active { color: var(--accent2); }
 
-    #record-status-msg {
-      font-family: var(--mono);
-      font-size: 11px;
-      color: var(--text2);
-    }
+    #record-status-msg { font-family: var(--mono); font-size: 11px; color: var(--text2); }
+    #record-count-display { font-family: var(--mono); font-size: 11px; color: var(--text3); }
 
-    #record-count-display {
-      font-family: var(--mono);
-      font-size: 11px;
-      color: var(--text3);
-    }
-
-    .recordings-list {
-      display: flex; flex-direction: column; gap: 6px;
-      max-height: 280px;
-      overflow-y: auto;
-    }
+    .recordings-list { display: flex; flex-direction: column; gap: 6px; max-height: 280px; overflow-y: auto; }
 
     .recording-item {
       display: flex; justify-content: space-between; align-items: center;
-      padding: 10px 14px;
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 8px;
+      padding: 10px 14px; background: var(--surface2);
+      border: 1px solid var(--border); border-radius: 8px;
     }
 
-    .recording-item-label {
-      font-family: var(--mono);
-      font-size: 12px; color: var(--text);
-    }
-
-    .recording-item-count {
-      font-family: var(--mono);
-      font-size: 10px; color: var(--text3);
-    }
+    .recording-item-label { font-family: var(--mono); font-size: 12px; color: var(--text); }
+    .recording-item-count { font-family: var(--mono); font-size: 10px; color: var(--text3); }
 
     .record-camera-wrap {
-      position: relative;
-      border-radius: 16px;
-      overflow: hidden;
-      border: 1px solid var(--border);
-      background: #000;
-      aspect-ratio: 4/3;
-      max-width: 640px;
+      position: relative; border-radius: 16px; overflow: hidden;
+      border: 1px solid var(--border); background: #000;
+      aspect-ratio: 4/3; max-width: 640px;
     }
 
     #record_canvas {
-      width: 100%; height: 100%;
-      display: block;
-      transform: rotateY(180deg);
-      -webkit-transform: rotateY(180deg);
+      width: 100%; height: 100%; display: block;
+      transform: rotateY(180deg); -webkit-transform: rotateY(180deg);
     }
 
-    /* ══════════════════════════════
-       GESTURES TAB
-    ══════════════════════════════ */
-    .gestures-layout {
-      padding: 32px;
-      max-width: 900px;
-      margin: 0 auto;
-    }
+    /* ══ GESTURES TAB ══ */
+    .gestures-layout { padding: 32px; max-width: 900px; margin: 0 auto; }
 
     .gestures-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-      gap: 12px;
-      margin-top: 16px;
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 12px; margin-top: 16px;
     }
 
     .gesture-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 16px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 12px; padding: 16px;
       display: flex; flex-direction: column; gap: 8px;
       transition: border-color 0.2s, transform 0.2s;
-      position: relative;
     }
     .gesture-card:hover { border-color: var(--surface3); transform: translateY(-2px); }
     .gesture-card.custom { border-color: rgba(255,106,157,0.3); }
     .gesture-card.custom:hover { border-color: var(--accent2); }
 
-    .gesture-name {
-      font-family: var(--mono);
-      font-size: 18px; font-weight: 700;
-      color: var(--text);
-      text-transform: uppercase;
-    }
+    .gesture-name { font-family: var(--mono); font-size: 18px; font-weight: 700; color: var(--text); text-transform: uppercase; }
+    .gesture-meta { font-family: var(--mono); font-size: 10px; color: var(--text3); }
 
-    .gesture-meta {
-      font-family: var(--mono);
-      font-size: 10px; color: var(--text3);
-    }
+    .gesture-tag { font-family: var(--mono); font-size: 9px; padding: 2px 7px; border-radius: 10px; width: fit-content; }
+    .gesture-tag.builtin { background: rgba(124,106,255,0.15); color: var(--accent); border: 1px solid rgba(124,106,255,0.2); }
+    .gesture-tag.custom { background: rgba(255,106,157,0.15); color: var(--accent2); border: 1px solid rgba(255,106,157,0.2); }
 
-    .gesture-tag {
-      font-family: var(--mono);
-      font-size: 9px;
-      padding: 2px 7px;
-      border-radius: 10px;
-      width: fit-content;
-    }
-    .gesture-tag.builtin {
-      background: rgba(124,106,255,0.15);
-      color: var(--accent);
-      border: 1px solid rgba(124,106,255,0.2);
-    }
-    .gesture-tag.custom {
-      background: rgba(255,106,157,0.15);
-      color: var(--accent2);
-      border: 1px solid rgba(255,106,157,0.2);
-    }
-
-    .gesture-actions {
-      display: flex; gap: 6px; margin-top: 4px;
-    }
+    .gesture-actions { display: flex; gap: 6px; margin-top: 4px; }
 
     .btn-sm {
-      font-family: var(--mono);
-      font-size: 9px;
-      padding: 4px 9px;
-      border-radius: 5px;
-      border: 1px solid var(--border);
-      background: none;
-      color: var(--text2);
-      cursor: pointer;
-      transition: all 0.2s;
-      letter-spacing: 0.3px;
+      font-family: var(--mono); font-size: 9px; padding: 4px 9px;
+      border-radius: 5px; border: 1px solid var(--border);
+      background: none; color: var(--text2); cursor: pointer;
+      transition: all 0.2s; letter-spacing: 0.3px;
     }
     .btn-sm:hover { color: var(--accent); border-color: var(--accent); }
     .btn-sm.danger:hover { color: var(--red); border-color: var(--red); }
 
     .gestures-section-header {
-      font-family: var(--mono);
-      font-size: 10px;
-      color: var(--text3);
-      letter-spacing: 2px;
-      text-transform: uppercase;
-      margin-top: 24px; margin-bottom: 8px;
+      font-family: var(--mono); font-size: 10px; color: var(--text3);
+      letter-spacing: 2px; text-transform: uppercase; margin-top: 24px; margin-bottom: 8px;
     }
 
-    .empty-state {
-      grid-column: 1/-1;
-      text-align: center;
-      padding: 40px;
-      color: var(--text3);
-      font-family: var(--mono);
-      font-size: 12px;
-    }
+    .empty-state { grid-column: 1/-1; text-align: center; padding: 40px; color: var(--text3); font-family: var(--mono); font-size: 12px; }
 
-    /* ── Scrollbar ── */
     ::-webkit-scrollbar { width: 4px; }
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
 
-    /* ── Toast ── */
     #toast {
       position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(60px);
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 10px 20px;
-      font-family: var(--mono);
-      font-size: 12px;
-      color: var(--text);
-      z-index: 1000;
-      transition: transform 0.3s cubic-bezier(.34,1.56,.64,1);
+      background: var(--surface2); border: 1px solid var(--border); border-radius: 10px;
+      padding: 10px 20px; font-family: var(--mono); font-size: 12px; color: var(--text);
+      z-index: 1000; transition: transform 0.3s cubic-bezier(.34,1.56,.64,1);
     }
     #toast.show { transform: translateX(-50%) translateY(0); }
-
   </style>
 </head>
 <body>
 
 <header>
   <div class="logo">Sign<span>Bridge</span></div>
-  <div class="header-badge">DTW · MediaPipe · v2.0</div>
+  <div class="header-right">
+    <!-- ── API Key: stored only in localStorage, never sent to GitHub ── -->
+    <div class="api-key-wrap">
+      <span class="api-key-label">FEATHERLESS KEY</span>
+      <input class="api-key-input" id="api-key-input" type="password"
+             placeholder="rc_xxxxx…" oninput="saveApiKey(this.value)">
+      <div class="api-key-status" id="api-key-status"></div>
+    </div>
+    <div class="header-badge">DTW · MediaPipe · v2.1</div>
+  </div>
 </header>
 
 <nav class="tabs">
@@ -604,13 +411,9 @@
 
 <div class="main">
 
-  <!-- ════════════════════════════════
-       DETECT TAB
-  ════════════════════════════════ -->
+  <!-- DETECT TAB -->
   <div id="tab-detect" class="tab-panel active">
     <div class="detect-layout">
-
-      <!-- Camera -->
       <div class="camera-section">
         <div class="camera-wrap">
           <video id="input_video" style="display:none"></video>
@@ -626,17 +429,13 @@
         <div id="status-text">Initializing camera...</div>
       </div>
 
-      <!-- Right panel -->
       <div class="right-panel">
-
-        <!-- Detected word -->
         <div class="result-card">
           <div class="result-label">Detected Sign</div>
           <div id="detected-word">---</div>
           <div id="conf-text"></div>
         </div>
 
-        <!-- Word queue -->
         <div class="queue-card">
           <div class="card-header">
             <div class="card-title">Word Queue</div>
@@ -647,28 +446,23 @@
           </div>
         </div>
 
-        <!-- AI conversion -->
         <div class="ai-card">
           <div class="ai-header">
             <div class="card-title">AI Sentence</div>
-            <div class="ai-badge">LOCAL SERVER · QWEN</div>
+            <div class="ai-badge">FEATHERLESS · QWEN</div>
           </div>
-          <div id="ai-output" style="color:var(--text3); font-style:normal;">Words will appear here as a natural sentence.</div>
+          <div id="ai-output" style="color:var(--text3);font-style:normal;">Words will appear here as a natural sentence.</div>
           <button class="btn-primary" id="convert-btn" onclick="convertToSentence()" disabled>
             ✦ Convert to Sentence
           </button>
         </div>
-
       </div>
     </div>
   </div>
 
-  <!-- ════════════════════════════════
-       RECORD TAB
-  ════════════════════════════════ -->
+  <!-- RECORD TAB -->
   <div id="tab-record" class="tab-panel">
     <div class="record-layout">
-
       <div class="record-camera">
         <div class="record-camera-wrap">
           <canvas id="record_canvas" width="640" height="480"></canvas>
@@ -683,7 +477,6 @@
 
       <div class="record-panel">
         <div class="section-title">Record New Gesture</div>
-
         <div style="display:flex;flex-direction:column;gap:8px;">
           <label style="font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:1px;">GESTURE LABEL</label>
           <div class="input-row">
@@ -705,38 +498,30 @@
         <div style="display:flex;flex-direction:column;gap:10px;">
           <div class="section-title" style="margin-top:0;">Saved Custom Gestures</div>
           <div class="recordings-list" id="custom-recordings-list">
-            <div style="font-family:var(--mono);font-size:11px;color:var(--text3);padding:10px 0;">
-              No custom gestures yet.
-            </div>
+            <div style="font-family:var(--mono);font-size:11px;color:var(--text3);padding:10px 0;">No custom gestures yet.</div>
           </div>
         </div>
-
       </div>
     </div>
   </div>
 
-  <!-- ════════════════════════════════
-       GESTURES TAB
-  ════════════════════════════════ -->
+  <!-- GESTURES TAB -->
   <div id="tab-gestures" class="tab-panel">
     <div class="gestures-layout">
-
       <div class="section-title">All Gestures</div>
-
-      <div class="gestures-section-header">Built-in</div>
-      <div class="gestures-grid" id="builtin-gestures-grid"></div>
-
-      <div class="gestures-section-header" style="margin-top:32px;">Custom (Stored Locally)</div>
-      <div class="gestures-grid" id="custom-gestures-grid">
-        <div class="empty-state" id="custom-empty">No custom gestures recorded yet.</div>
+      <div class="gestures-section-header">Built-in (from templates.json)</div>
+      <div class="gestures-grid" id="builtin-gestures-grid">
+        <div class="empty-state">Loading templates.json…</div>
       </div>
-
+      <div class="gestures-section-header" style="margin-top:32px;">Custom (Stored in Browser)</div>
+      <div class="gestures-grid" id="custom-gestures-grid">
+        <div class="empty-state">No custom gestures recorded yet.</div>
+      </div>
     </div>
   </div>
 
 </div>
 
-<!-- Toast -->
 <div id="toast"></div>
 
 <script>
@@ -747,22 +532,49 @@ const SEQUENCE_LENGTH   = 30;
 const NO_HAND_THRESHOLD = 10;
 const CONF_THRESHOLD    = 0.15;
 const HOLD_FRAMES       = 45;
-const BUILTIN_LABELS    = ["bye","come","drink","eat","go","hello","help","no","stop","yes"];
 const RECORDINGS_NEEDED = 5;
 const LS_CUSTOM_KEY     = "signbridge_custom_templates";
-// AI requests go to the local Python server (server.py)
-// API key is stored in server.py — never exposed in the browser
-const LOCAL_SERVER_URL  = "http://localhost:5000/convert";
+const LS_API_KEY        = "signbridge_api_key";
 
-let templates   = {};   // { label: [Float32Array[], ...] }
-let wordQueue   = [];
-let customTemplates = {}; // { label: [seq_array, ...] }
+// Featherless.ai — called directly from the browser.
+// Your key is stored ONLY in localStorage (never pushed to GitHub).
+const FEATHERLESS_URL = "https://api.featherless.ai/v1/chat/completions";
+const MODEL           = "Qwen/Qwen2.5-7B-Instruct";
+
+// ── Labels come entirely from templates.json (no hardcoding) ──
+let BUILTIN_LABELS = [];   // populated after fetch
+let templates      = {};   // { label: [Float32Array[], ...] }
+let wordQueue      = [];
+let customTemplates = {};
+
+// ══════════════════════════════════════════════════════════
+// API KEY — saved to localStorage so it survives page refresh
+// but is NEVER committed to your repo.
+// ══════════════════════════════════════════════════════════
+function saveApiKey(val) {
+  const key = val.trim();
+  localStorage.setItem(LS_API_KEY, key);
+  document.getElementById("api-key-status").className =
+    "api-key-status" + (key ? " ok" : "");
+}
+
+function loadApiKey() {
+  const key = localStorage.getItem(LS_API_KEY) || "";
+  const input = document.getElementById("api-key-input");
+  if (key) input.value = key;
+  document.getElementById("api-key-status").className =
+    "api-key-status" + (key ? " ok" : "");
+  return key;
+}
+
+function getApiKey() {
+  return (localStorage.getItem(LS_API_KEY) || "").trim();
+}
 
 // ══════════════════════════════════════════════════════════
 // LOCAL STORAGE — CUSTOM TEMPLATES
 // ══════════════════════════════════════════════════════════
 function saveCustomToLS() {
-  // Convert Float32Arrays to plain arrays for JSON
   const serializable = {};
   for (const [label, seqs] of Object.entries(customTemplates)) {
     serializable[label] = seqs.map(seq => seq.map(frame => Array.from(frame)));
@@ -783,36 +595,42 @@ function loadCustomFromLS() {
 
 function mergeCustomIntoTemplates() {
   for (const [label, seqs] of Object.entries(customTemplates)) {
-    if (!templates[label]) templates[label] = [];
-    // Add only if not already merged
-    const existingCount = (templates[label] || []).length;
     templates[label] = [...(templates[label] || []), ...seqs];
   }
 }
 
 // ══════════════════════════════════════════════════════════
-// LOAD BUILT-IN TEMPLATES
+// LOAD BUILT-IN TEMPLATES — labels are read from templates.json keys,
+// so BUILTIN_LABELS is never hardcoded.
 // ══════════════════════════════════════════════════════════
 async function loadTemplates() {
   try {
     const res = await fetch("templates.json");
     if (!res.ok) throw new Error("templates.json not found");
     const raw = await res.json();
+
+    // ── Derive labels dynamically from whatever keys exist in the JSON ──
+    BUILTIN_LABELS = Object.keys(raw);
+
     for (const label of BUILTIN_LABELS) {
-      if (!raw[label]) { console.warn("Missing label:", label); continue; }
       templates[label] = raw[label].map(seq => seq.map(frame => new Float32Array(frame)));
     }
+
     loadCustomFromLS();
     mergeCustomIntoTemplates();
     updateRecordingsListUI();
     refreshGesturesTab();
-    document.getElementById("status-text").textContent = "Templates ready! Show your hand to begin.";
+    document.getElementById("status-text").textContent =
+      `Templates ready! ${BUILTIN_LABELS.length} built-in gestures. Show your hand to begin.`;
   } catch(e) {
+    // No templates.json — still work with custom-only gestures
+    BUILTIN_LABELS = [];
     loadCustomFromLS();
     mergeCustomIntoTemplates();
     updateRecordingsListUI();
     refreshGesturesTab();
-    document.getElementById("status-text").textContent = "templates.json not found — custom gestures only.";
+    document.getElementById("status-text").textContent =
+      "templates.json not found — custom gestures only.";
     console.warn(e);
   }
 }
@@ -870,9 +688,8 @@ function predict(querySeq) {
   for (const label of Object.keys(templates)) {
     const seqs = templates[label];
     if (!seqs || seqs.length === 0) continue;
-    const dists = seqs.map(tmpl => dtwDistance(query, normalizeSequence(tmpl))).sort((a,b)=>a-b);
-    const topK = dists.slice(0, 3);
-    labelDists[label] = topK.reduce((s,v)=>s+v,0) / topK.length;
+    const dists = seqs.map(tmpl => dtwDistance(query, normalizeSequence(tmpl))).sort((a,b) => a-b);
+    labelDists[label] = dists.slice(0, 3).reduce((s,v) => s+v, 0) / Math.min(3, dists.length);
   }
   const entries = Object.entries(labelDists);
   if (entries.length === 0) return { label: "?", confidence: 0 };
@@ -916,10 +733,7 @@ const detectState = {
 function updateDetector(frameVec, handDetected) {
   if (handDetected) {
     detectState.noHandCount = 0;
-    if (!detectState.isRecording) {
-      detectState.isRecording = true;
-      detectState.sequence = [];
-    }
+    if (!detectState.isRecording) { detectState.isRecording = true; detectState.sequence = []; }
     detectState.sequence.push(frameVec);
   } else {
     detectState.noHandCount++;
@@ -929,7 +743,6 @@ function updateDetector(frameVec, handDetected) {
         if (confidence >= CONF_THRESHOLD) {
           detectState.resultText = label.toUpperCase();
           detectState.resultConf = confidence;
-          // Auto add to queue
           addWordToQueue(label.toUpperCase());
         } else {
           detectState.resultText = "UNKNOWN";
@@ -949,14 +762,14 @@ function updateDetector(frameVec, handDetected) {
 // ══════════════════════════════════════════════════════════
 // DETECT UI
 // ══════════════════════════════════════════════════════════
-const detectCanvas  = document.getElementById("output_canvas");
-const detectCtx     = detectCanvas.getContext("2d");
-const progressBar   = document.getElementById("progress-bar");
-const statusText    = document.getElementById("status-text");
-const detectedWord  = document.getElementById("detected-word");
-const confText      = document.getElementById("conf-text");
-const recDot        = document.getElementById("rec-dot");
-const camLabel      = document.getElementById("cam-label");
+const detectCanvas = document.getElementById("output_canvas");
+const detectCtx    = detectCanvas.getContext("2d");
+const progressBar  = document.getElementById("progress-bar");
+const statusText   = document.getElementById("status-text");
+const detectedWord = document.getElementById("detected-word");
+const confText     = document.getElementById("conf-text");
+const recDot       = document.getElementById("rec-dot");
+const camLabel     = document.getElementById("cam-label");
 
 function drawDetectUI(handDetected) {
   if (detectState.isRecording) {
@@ -971,7 +784,6 @@ function drawDetectUI(handDetected) {
     recDot.classList.remove("active");
     camLabel.textContent = handDetected ? "TRACKING" : "STANDBY";
   }
-
   if (detectState.resultText && detectState.resultHold > 0) {
     detectedWord.textContent = detectState.resultText;
     detectedWord.className = detectState.resultText === "UNKNOWN" ? "unknown" : "has-result";
@@ -995,26 +807,25 @@ function addWordToQueue(word) {
 function removeWordFromQueue(idx) {
   wordQueue.splice(idx, 1);
   renderQueue();
-  if (wordQueue.length === 0) {
-    document.getElementById("convert-btn").disabled = true;
-    document.getElementById("ai-output").textContent = "Words will appear here as a natural sentence.";
-    document.getElementById("ai-output").style.color = "var(--text3)";
-    document.getElementById("ai-output").style.fontStyle = "normal";
-  }
+  if (wordQueue.length === 0) resetAiCard();
 }
 
 function clearQueue() {
   wordQueue = [];
   renderQueue();
+  resetAiCard();
+}
+
+function resetAiCard() {
   document.getElementById("convert-btn").disabled = true;
-  document.getElementById("ai-output").textContent = "Words will appear here as a natural sentence.";
-  document.getElementById("ai-output").style.color = "var(--text3)";
-  document.getElementById("ai-output").style.fontStyle = "normal";
+  const o = document.getElementById("ai-output");
+  o.textContent = "Words will appear here as a natural sentence.";
+  o.style.color = "var(--text3)";
+  o.style.fontStyle = "normal";
 }
 
 function renderQueue() {
   const container = document.getElementById("word-queue");
-  const empty = document.getElementById("queue-empty");
   if (wordQueue.length === 0) {
     container.innerHTML = '<div class="queue-empty" id="queue-empty">No words yet. Start signing!</div>';
     return;
@@ -1025,38 +836,59 @@ function renderQueue() {
 }
 
 // ══════════════════════════════════════════════════════════
-// AI SENTENCE CONVERSION — via local server.py (API key lives there)
+// AI SENTENCE — calls Featherless.ai directly from browser.
+// API key is read from localStorage (entered once in the header input).
 // ══════════════════════════════════════════════════════════
 async function convertToSentence() {
   if (wordQueue.length === 0) return;
 
+  const apiKey = getApiKey();
+  if (!apiKey) {
+    showToast("⚠ Enter your Featherless API key in the header first!");
+    return;
+  }
+
   const output = document.getElementById("ai-output");
   const btn    = document.getElementById("convert-btn");
   btn.disabled = true;
-
   output.innerHTML = '<div class="ai-thinking"><span></span><span></span><span></span></div>';
 
+  const prompt =
+    "You are a sign language interpreter. " +
+    "Convert these detected sign language words into a natural, fluent sentence " +
+    "a hearing person can easily understand. Keep it simple and concise. " +
+    "Only reply with the final sentence, nothing else.\n\n" +
+    "Detected words: " + wordQueue.join(" ");
+
   try {
-    const res = await fetch(LOCAL_SERVER_URL, {
+    const res = await fetch(FEATHERLESS_URL, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ words: wordQueue })
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: MODEL,
+        max_tokens: 150,
+        messages: [{ role: "user", content: prompt }],
+      }),
     });
 
     const data = await res.json();
 
     if (!res.ok) {
-      output.textContent = data.error || `Server error (HTTP ${res.status})`;
+      const msg = data.error?.message || data.error || `HTTP ${res.status}`;
+      output.textContent = `API error: ${msg}`;
       output.style.color = "var(--red)";
       output.style.fontStyle = "normal";
       return;
     }
 
-    output.textContent = data.sentence || "Could not generate sentence.";
+    output.textContent = data.choices[0].message.content.trim() || "Could not generate sentence.";
     output.style.color = "var(--text)";
     output.style.fontStyle = "italic";
   } catch(e) {
-    output.textContent = "Cannot reach server.py — is it running? (python server.py)";
+    output.textContent = "Network error — check your connection or API key.";
     output.style.color = "var(--red)";
     output.style.fontStyle = "normal";
     console.error(e);
@@ -1077,30 +909,22 @@ const recordCountEl = document.getElementById("record-count-display");
 const recordLabelEl = document.getElementById("record-label-display");
 const recordStatTxt = document.getElementById("record-status-text");
 
-let recordingActive   = false;
-let recordLabel       = "";
-let recordSamples     = [];   // collected sequences
-let recordSeq         = [];
-let recordIsRecording = false;
-let recordNoHand      = 0;
+let recordingActive = false, recordLabel = "";
+let recordSamples = [], recordSeq = [];
+let recordIsRecording = false, recordNoHand = 0;
 
 function startRecording() {
   const labelRaw = document.getElementById("new-label-input").value.trim().toLowerCase().replace(/\s+/g,"_");
   if (!labelRaw) { showToast("Enter a label first!"); return; }
-
-  recordLabel     = labelRaw;
-  recordSamples   = [];
-  recordSeq       = [];
-  recordIsRecording = false;
-  recordNoHand    = 0;
+  recordLabel = labelRaw;
+  recordSamples = []; recordSeq = [];
+  recordIsRecording = false; recordNoHand = 0;
   recordingActive = true;
-
   recordLabelEl.textContent = labelRaw.toUpperCase();
   recordLabelEl.classList.add("active");
   recordStatMsg.textContent = "Show your hand to begin...";
   recordCountEl.textContent = `0 / ${RECORDINGS_NEEDED} samples`;
   recordStatTxt.textContent = "Recording in progress — show hand, gesture, hide hand";
-
   switchTab("record");
 }
 
@@ -1114,7 +938,6 @@ function stopRecording(reason) {
 
 function processRecordFrame(results) {
   if (!recordingActive) return;
-
   recordCtx.save();
   recordCtx.clearRect(0, 0, recordCanvas.width, recordCanvas.height);
   recordCtx.drawImage(results.image, 0, 0, recordCanvas.width, recordCanvas.height);
@@ -1126,58 +949,44 @@ function processRecordFrame(results) {
   }
   recordCtx.restore();
 
-  const handDetected = results.multiHandLandmarks && results.multiHandLandmarks.length > 0;
+  const handDetected = !!(results.multiHandLandmarks && results.multiHandLandmarks.length > 0);
   const frameVec = extractLandmarks(results);
 
   if (handDetected) {
     recordNoHand = 0;
-    if (!recordIsRecording) {
-      recordIsRecording = true;
-      recordSeq = [];
-    }
+    if (!recordIsRecording) { recordIsRecording = true; recordSeq = []; }
     recordSeq.push(frameVec);
-    const pct = Math.min(recordSeq.length / SEQUENCE_LENGTH * 100, 100);
-    recordProg.style.width = pct + "%";
+    recordProg.style.width = Math.min(recordSeq.length / SEQUENCE_LENGTH * 100, 100) + "%";
     recordStatMsg.textContent = `Recording sample ${recordSamples.length + 1}… (${recordSeq.length} frames)`;
   } else {
     recordNoHand++;
     if (recordIsRecording && recordNoHand >= NO_HAND_THRESHOLD) {
       if (recordSeq.length >= 8) {
-        // Save this sample
-        const resized = resizeSequence(recordSeq, SEQUENCE_LENGTH);
-        const arr = resized.map(f => new Float32Array(f));
+        const arr = resizeSequence(recordSeq, SEQUENCE_LENGTH).map(f => new Float32Array(f));
         recordSamples.push(arr);
-
         const count = recordSamples.length;
         recordCountEl.textContent = `${count} / ${RECORDINGS_NEEDED} samples`;
         recordStatMsg.textContent = count < RECORDINGS_NEEDED
           ? `Sample ${count} saved! Show hand for next...`
           : "All samples recorded!";
-
         if (count >= RECORDINGS_NEEDED) {
           saveCustomGesture(recordLabel, recordSamples);
           stopRecording(`"${recordLabel}" saved with ${count} samples!`);
-          showToast(`✓ "${recordLabel}" saved to local storage`);
+          showToast(`✓ "${recordLabel}" saved to browser storage`);
         }
       } else {
         recordStatMsg.textContent = "Too short — try again";
       }
-      recordIsRecording = false;
-      recordSeq = [];
-      recordNoHand = 0;
-      recordProg.style.width = "0%";
+      recordIsRecording = false; recordSeq = [];
+      recordNoHand = 0; recordProg.style.width = "0%";
     }
   }
 }
 
 function saveCustomGesture(label, samples) {
-  // Store in customTemplates
   customTemplates[label] = samples;
   saveCustomToLS();
-
-  // Also inject into active templates
   templates[label] = [...(templates[label] || []), ...samples];
-
   updateRecordingsListUI();
   refreshGesturesTab();
 }
@@ -1185,15 +994,7 @@ function saveCustomGesture(label, samples) {
 function deleteCustomGesture(label) {
   delete customTemplates[label];
   saveCustomToLS();
-
-  // Rebuild templates for this label from built-in only
-  // If built-in existed, restore; if not, delete
-  if (templates[label]) {
-    // Remove all entries — we can't distinguish at this point, so we rebuild from the JSON
-    // For simplicity, mark as empty so it won't be used
-    delete templates[label];
-  }
-
+  delete templates[label];
   updateRecordingsListUI();
   refreshGesturesTab();
   showToast(`"${label}" deleted`);
@@ -1218,34 +1019,36 @@ function updateRecordingsListUI() {
 }
 
 // ══════════════════════════════════════════════════════════
-// GESTURES TAB
+// GESTURES TAB — built-in labels come from templates.json keys
 // ══════════════════════════════════════════════════════════
 function refreshGesturesTab() {
-  // Built-in
   const builtinGrid = document.getElementById("builtin-gestures-grid");
-  builtinGrid.innerHTML = BUILTIN_LABELS.map(label =>
-    `<div class="gesture-card">
-      <div class="gesture-tag builtin">BUILT-IN</div>
-      <div class="gesture-name">${label}</div>
-      <div class="gesture-meta">${(templates[label] || []).length} template(s)</div>
-      <div class="gesture-actions">
-        <button class="btn-sm" onclick="manualAddToQueue('${label.toUpperCase()}')">Add to queue</button>
-      </div>
-    </div>`
-  ).join("");
+  if (BUILTIN_LABELS.length === 0) {
+    builtinGrid.innerHTML = '<div class="empty-state">No templates.json loaded. Push your templates.json to GitHub alongside index.html.</div>';
+  } else {
+    builtinGrid.innerHTML = BUILTIN_LABELS.map(label =>
+      `<div class="gesture-card">
+        <div class="gesture-tag builtin">BUILT-IN</div>
+        <div class="gesture-name">${label}</div>
+        <div class="gesture-meta">${(templates[label] || []).length} template(s)</div>
+        <div class="gesture-actions">
+          <button class="btn-sm" onclick="manualAddToQueue('${label.toUpperCase()}')">Add to queue</button>
+        </div>
+      </div>`
+    ).join("");
+  }
 
-  // Custom
   const customGrid = document.getElementById("custom-gestures-grid");
   const customLabels = Object.keys(customTemplates);
   if (customLabels.length === 0) {
-    customGrid.innerHTML = '<div class="empty-state" id="custom-empty">No custom gestures recorded yet.</div>';
+    customGrid.innerHTML = '<div class="empty-state">No custom gestures recorded yet.</div>';
     return;
   }
   customGrid.innerHTML = customLabels.map(label =>
     `<div class="gesture-card custom">
       <div class="gesture-tag custom">CUSTOM</div>
       <div class="gesture-name">${label}</div>
-      <div class="gesture-meta">${customTemplates[label].length} sample(s) · local</div>
+      <div class="gesture-meta">${customTemplates[label].length} sample(s) · browser</div>
       <div class="gesture-actions">
         <button class="btn-sm" onclick="manualAddToQueue('${label.toUpperCase()}')">Add to queue</button>
         <button class="btn-sm danger" onclick="deleteCustomGesture('${label}')">Delete</button>
@@ -1268,14 +1071,11 @@ const hands = new Hands({
 });
 
 hands.setOptions({
-  maxNumHands: 2,
-  modelComplexity: 1,
-  minDetectionConfidence: 0.5,
-  minTrackingConfidence: 0.5,
+  maxNumHands: 2, modelComplexity: 1,
+  minDetectionConfidence: 0.5, minTrackingConfidence: 0.5,
 });
 
 hands.onResults(results => {
-  // Always draw to detect canvas when detect tab is active
   if (currentTab === "detect") {
     detectCtx.save();
     detectCtx.clearRect(0, 0, detectCanvas.width, detectCanvas.height);
@@ -1287,19 +1087,15 @@ hands.onResults(results => {
       });
     }
     detectCtx.restore();
-
     const handDetected = !!(results.multiHandLandmarks && results.multiHandLandmarks.length > 0);
-    const frameVec = extractLandmarks(results);
-    updateDetector(frameVec, handDetected);
+    updateDetector(extractLandmarks(results), handDetected);
     drawDetectUI(handDetected);
   }
 
-  // Record tab processing
   if (currentTab === "record") {
     if (recordingActive) {
       processRecordFrame(results);
     } else {
-      // Just show camera feed
       recordCtx.save();
       recordCtx.clearRect(0, 0, recordCanvas.width, recordCanvas.height);
       recordCtx.drawImage(results.image, 0, 0, recordCanvas.width, recordCanvas.height);
@@ -1325,9 +1121,9 @@ function switchTab(name) {
   document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
   document.getElementById("tab-" + name).classList.add("active");
   document.querySelectorAll(".tab-btn").forEach(b => {
-    if (b.textContent.toLowerCase().includes(name === "detect" ? "detect" : name === "record" ? "record" : "gesture")) {
-      b.classList.add("active");
-    }
+    if (b.textContent.toLowerCase().includes(
+      name === "detect" ? "detect" : name === "record" ? "record" : "gesture"
+    )) b.classList.add("active");
   });
 }
 
@@ -1352,8 +1148,8 @@ const camera  = new Camera(videoEl, {
   width: 640, height: 480,
 });
 
+loadApiKey();
 loadTemplates().then(() => camera.start());
-refreshGesturesTab();
 </script>
 </body>
 </html>
