@@ -12,10 +12,9 @@ import mediapipe as mp
 import numpy as np
 import os
 
-# ===== SET YOUR PATHS HERE =====
+# SET YOUR PATHS HERE 
 SAVE_DIR    = r"C:\Users\emily\OneDrive\Documents\GitHub\2030\my_templates"
 LABELS_FILE = r"C:\Users\emily\OneDrive\Documents\GitHub\2030\labels.txt"
-# ================================
 
 RECORDINGS_PER_LABEL = 5
 SEQUENCE_LENGTH      = 30
