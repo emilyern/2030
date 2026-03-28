@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>SignBridge — Sign Language Recognition</title>
+  <title>Silent Voice</title>
   <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
@@ -66,7 +66,7 @@
       color: var(--text2);
     }
 
-    /* ── API Key input in header ── */
+    /*  API Key input in header  */
     .api-key-wrap {
       display: flex; align-items: center; gap: 6px;
     }
@@ -114,7 +114,7 @@
     .tab-panel { display: none; }
     .tab-panel.active { display: block; }
 
-    /* ══ DETECT TAB ══ */
+    /* Detect Tab */
     .detect-layout {
       display: grid; grid-template-columns: 1fr 360px;
       min-height: calc(100vh - 120px);
@@ -264,7 +264,7 @@
 
     @keyframes blink { 0%,80%,100% { opacity: 0.2; transform: scale(0.8); } 40% { opacity: 1; transform: scale(1); } }
 
-    /* ══ RECORD TAB ══ */
+    /* Record Tab*/
     .record-layout {
       display: grid; grid-template-columns: 1fr 380px;
       min-height: calc(100vh - 120px);
@@ -331,7 +331,7 @@
       transform: rotateY(180deg); -webkit-transform: rotateY(180deg);
     }
 
-    /* ══ GESTURES TAB ══ */
+    /* gestures tab */
     .gestures-layout { padding: 32px; max-width: 900px; margin: 0 auto; }
 
     .gestures-grid {
@@ -505,7 +505,7 @@
     </div>
   </div>
 
-  <!-- GESTURES TAB -->
+  <!-- gesture tab -->
   <div id="tab-gestures" class="tab-panel">
     <div class="gestures-layout">
       <div class="section-title">All Gestures</div>
@@ -525,9 +525,7 @@
 <div id="toast"></div>
 
 <script>
-// ══════════════════════════════════════════════════════════
 // CONFIGURATION
-// ══════════════════════════════════════════════════════════
 const SEQUENCE_LENGTH   = 30;
 const NO_HAND_THRESHOLD = 10;
 const CONF_THRESHOLD    = 0.15;
@@ -547,10 +545,8 @@ let templates      = {};   // { label: [Float32Array[], ...] }
 let wordQueue      = [];
 let customTemplates = {};
 
-// ══════════════════════════════════════════════════════════
 // API KEY — saved to localStorage so it survives page refresh
 // but is NEVER committed to your repo.
-// ══════════════════════════════════════════════════════════
 function saveApiKey(val) {
   const key = val.trim();
   localStorage.setItem(LS_API_KEY, key);
@@ -571,9 +567,7 @@ function getApiKey() {
   return (localStorage.getItem(LS_API_KEY) || "").trim();
 }
 
-// ══════════════════════════════════════════════════════════
 // LOCAL STORAGE — CUSTOM TEMPLATES
-// ══════════════════════════════════════════════════════════
 function saveCustomToLS() {
   const serializable = {};
   for (const [label, seqs] of Object.entries(customTemplates)) {
@@ -599,10 +593,8 @@ function mergeCustomIntoTemplates() {
   }
 }
 
-// ══════════════════════════════════════════════════════════
 // LOAD BUILT-IN TEMPLATES — labels are read from templates.json keys,
 // so BUILTIN_LABELS is never hardcoded.
-// ══════════════════════════════════════════════════════════
 async function loadTemplates() {
   try {
     const res = await fetch("templates.json");
@@ -635,9 +627,7 @@ async function loadTemplates() {
   }
 }
 
-// ══════════════════════════════════════════════════════════
 // PRE-PROCESSING
-// ══════════════════════════════════════════════════════════
 function normalizeSequence(seq) {
   const T = seq.length, D = seq[0].length;
   const mean = new Float32Array(D), std = new Float32Array(D);
@@ -662,9 +652,7 @@ function resizeSequence(seq, targetLen = SEQUENCE_LENGTH) {
   return out;
 }
 
-// ══════════════════════════════════════════════════════════
 // DTW
-// ══════════════════════════════════════════════════════════
 function dtwDistance(seq1, seq2) {
   const n = seq1.length, m = seq2.length;
   const dtw = new Float32Array((n + 1) * (m + 1)).fill(Infinity);
@@ -700,9 +688,7 @@ function predict(querySeq) {
   return { label: bestLabel, confidence };
 }
 
-// ══════════════════════════════════════════════════════════
 // LANDMARK EXTRACTION
-// ══════════════════════════════════════════════════════════
 function extractLandmarks(results) {
   const leftArray = new Float32Array(63), rightArray = new Float32Array(63);
   if (results.multiHandLandmarks && results.multiHandedness) {
@@ -722,9 +708,7 @@ function extractLandmarks(results) {
   return combined;
 }
 
-// ══════════════════════════════════════════════════════════
 // DETECT STATE MACHINE
-// ══════════════════════════════════════════════════════════
 const detectState = {
   sequence: [], isRecording: false, noHandCount: 0,
   resultText: "", resultConf: 0, resultHold: 0
@@ -759,9 +743,7 @@ function updateDetector(frameVec, handDetected) {
   else detectState.resultText = "";
 }
 
-// ══════════════════════════════════════════════════════════
 // DETECT UI
-// ══════════════════════════════════════════════════════════
 const detectCanvas = document.getElementById("output_canvas");
 const detectCtx    = detectCanvas.getContext("2d");
 const progressBar  = document.getElementById("progress-bar");
@@ -795,9 +777,7 @@ function drawDetectUI(handDetected) {
   }
 }
 
-// ══════════════════════════════════════════════════════════
 // WORD QUEUE
-// ══════════════════════════════════════════════════════════
 function addWordToQueue(word) {
   wordQueue.push(word);
   renderQueue();
@@ -835,10 +815,8 @@ function renderQueue() {
   ).join("");
 }
 
-// ══════════════════════════════════════════════════════════
 // AI SENTENCE — calls Featherless.ai directly from browser.
 // API key is read from localStorage (entered once in the header input).
-// ══════════════════════════════════════════════════════════
 async function convertToSentence() {
   if (wordQueue.length === 0) return;
 
@@ -898,9 +876,7 @@ async function convertToSentence() {
   }
 }
 
-// ══════════════════════════════════════════════════════════
 // RECORDING — CUSTOM GESTURES
-// ══════════════════════════════════════════════════════════
 const recordCanvas  = document.getElementById("record_canvas");
 const recordCtx     = recordCanvas.getContext("2d");
 const recordProg    = document.getElementById("record-progress");
@@ -1018,9 +994,7 @@ function updateRecordingsListUI() {
   ).join("");
 }
 
-// ══════════════════════════════════════════════════════════
 // GESTURES TAB — built-in labels come from templates.json keys
-// ══════════════════════════════════════════════════════════
 function refreshGesturesTab() {
   const builtinGrid = document.getElementById("builtin-gestures-grid");
   if (BUILTIN_LABELS.length === 0) {
@@ -1063,9 +1037,7 @@ function manualAddToQueue(word) {
   showToast(`"${word}" added to queue`);
 }
 
-// ══════════════════════════════════════════════════════════
 // MEDIAPIPE CORE
-// ══════════════════════════════════════════════════════════
 const hands = new Hands({
   locateFile: f => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${f}`
 });
@@ -1110,9 +1082,7 @@ hands.onResults(results => {
   }
 });
 
-// ══════════════════════════════════════════════════════════
 // TAB SWITCHING
-// ══════════════════════════════════════════════════════════
 let currentTab = "detect";
 
 function switchTab(name) {
@@ -1127,9 +1097,7 @@ function switchTab(name) {
   });
 }
 
-// ══════════════════════════════════════════════════════════
 // TOAST
-// ══════════════════════════════════════════════════════════
 let toastTimer;
 function showToast(msg) {
   const t = document.getElementById("toast");
@@ -1139,9 +1107,7 @@ function showToast(msg) {
   toastTimer = setTimeout(() => t.classList.remove("show"), 2500);
 }
 
-// ══════════════════════════════════════════════════════════
 // STARTUP
-// ══════════════════════════════════════════════════════════
 const videoEl = document.getElementById("input_video");
 const camera  = new Camera(videoEl, {
   onFrame: async () => { await hands.send({ image: videoEl }); },
