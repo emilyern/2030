@@ -10,10 +10,9 @@ import numpy as np
 import os
 import time
 
-# ===== SET YOUR PATHS HERE =====
+# SET YOUR PATHS HERE 
 DATA_ROOT   = r"C:\Users\emily\OneDrive\Documents\GitHub\2030\my_templates"
 LABELS_FILE = r"C:\Users\emily\OneDrive\Documents\GitHub\2030\labels.txt"
-# ================================
 
 
 def load_labels(path):
@@ -30,9 +29,7 @@ HOLD_FRAMES = 45
 NO_HAND_THRESHOLD = 10
 
 
-# ──────────────────────────────────────────────
 # DTW DISTANCE CALCULATION
-# ──────────────────────────────────────────────
 def dtw_distance(seq1, seq2):
     """
     Calculates the DTW distance between two sequences.
@@ -90,10 +87,7 @@ def resize_sequence(seq, target_len=SEQUENCE_LENGTH):
     indices = np.linspace(0, len(seq) - 1, target_len).astype(int)
     return seq[indices]
 
-
-# ──────────────────────────────────────────────
 # PREDICTION LOGIC
-# ──────────────────────────────────────────────
 def predict(query_seq, templates):
     """
     Returns (label, confidence_score 0~1, all_distances)
@@ -118,10 +112,7 @@ def predict(query_seq, templates):
 
     return best_label, confidence, label_distances
 
-
-# ──────────────────────────────────────────────
 # MEDIAPIPE INITIALIZATION
-# ──────────────────────────────────────────────
 mp_hands = mp.solutions.hands
 mp_drawing = mp.solutions.drawing_utils
 mp_drawing_styles = mp.solutions.drawing_styles
@@ -149,9 +140,7 @@ def extract_landmarks(results):
     return np.concatenate([left_hand, right_hand])
 
 
-# ──────────────────────────────────────────────
 # GESTURE DETECTOR STATE MACHINE
-# ──────────────────────────────────────────────
 class GestureDetector:
     def __init__(self):
         self.sequence = []
@@ -193,9 +182,7 @@ class GestureDetector:
             self.result_text = ""
 
 
-# ──────────────────────────────────────────────
 # UI DRAWING
-# ──────────────────────────────────────────────
 def draw_ui(frame, detector, fps):
     h, w = frame.shape[:2]
 
@@ -239,9 +226,7 @@ def draw_ui(frame, detector, fps):
     return frame
 
 
-# ──────────────────────────────────────────────
 # MAIN EXECUTION LOOP
-# ──────────────────────────────────────────────
 def run():
     templates = load_templates()
 
